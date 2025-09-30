@@ -186,7 +186,11 @@ public class ConfigManager {
 
     // Messages
     public String getMessage(String key) {
-        return messages.getString(key, "Message not found: " + key);
+        String message = messages.getString(key, "Message not found: " + key);
+        // Always replace {prefix} with the actual prefix
+        String prefix = messages.getString("prefix", "<gray>[BetterShop]</gray> ");
+        message = message.replace("{prefix}", prefix);
+        return message;
     }
 
     public String getMessage(String key, String... replacements) {

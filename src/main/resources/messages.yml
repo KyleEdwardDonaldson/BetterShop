@@ -6,7 +6,7 @@ prefix: "<gradient:#00ff00:#00aa00>[BetterShop]</gradient> <gray>"
 
 # Shop creation
 shop-creation-mode: "{prefix}Now <white>place a chest</white> or <white>right-click an existing chest</white> to create your {type_colored} shop"
-shop-created: "{prefix}Shop created successfully! Price: <yellow>${price}</yellow> per item"
+shop-created: "{prefix}Shop created successfully! Price: <yellow>${price}</yellow> per <white>{item}</white>"
 shop-creation-failed: "{prefix}<red>Failed to create shop. Make sure you're clicking a chest!"
 shop-already-exists: "{prefix}<red>A shop already exists at this location!"
 shop-limit-reached: "{prefix}<red>You've reached the maximum number of shops ({limit})"
@@ -31,13 +31,13 @@ shop-info-earnings: "<gray>Earnings: <yellow>${earnings}</yellow>"
 shop-info-owner: "<gray>Owner: <white>{owner}</white>"
 
 # Transactions - Buy
-purchase-success: "{prefix}Purchased <white>{quantity}x {item}</white> for <yellow>${total}</yellow>"
+purchase-success: "{prefix}Purchased <white><bold>{quantity}x {item}</bold></white> for <yellow>${total}</yellow> <gray>(${price} each)</gray>"
 purchase-insufficient-funds: "{prefix}<red>You need <yellow>${total}</yellow> but only have <yellow>${balance}</yellow>!"
 purchase-insufficient-stock: "{prefix}<red>Shop only has <white>{stock}</white> items in stock!"
 purchase-no-space: "{prefix}<red>Not enough inventory space!"
 
 # Transactions - Sell
-sell-success: "{prefix}Sold <white>{quantity}x {item}</white> for <yellow>${total}</yellow>"
+sell-success: "{prefix}Sold <white><bold>{quantity}x {item}</bold></white> for <yellow>${total}</yellow> <gray>(${price} each)</gray>"
 sell-shop-no-funds: "{prefix}<red>Shop doesn't have enough money to buy your items!"
 sell-insufficient-items: "{prefix}<red>You don't have enough items to sell!"
 sell-chest-full: "{prefix}<red>Shop chest is full!"

@@ -200,6 +200,7 @@ public class ShopProtectionListener implements Listener {
 
     /**
      * Update shop visuals when chest is closed (stock may have changed).
+     * Also detects and sets item type for empty SELL shops.
      */
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onChestClose(InventoryCloseEvent event) {
@@ -213,6 +214,25 @@ public class ShopProtectionListener implements Listener {
         }
 
         Shop shop = shopOpt.get();
+
+        // If this is an empty SELL shop and owner just added items, detect and set the item type
+        if (shop.getItem() == null && shop.getType() == dev.ked.bettershop.shop.ShopType.SELL) {
+            if (event.getPlayer() instanceof Player player && shop.getOwner().equals(player.getUniqueId())) {
+                // Look for the first item in the chest
+                for (org.bukkit.inventory.ItemStack item : chest.getInventory().getContents()) {
+                    if (item != null && item.getType() != Material.AIR) {
+                        org.bukkit.inventory.ItemStack detectedItem = item.clone();
+                        detectedItem.setAmount(1);
+                        shop.setItem(detectedItem);
+
+                        player.sendMessage(miniMessage.deserialize(
+                            config.getMessage("prefix") + "<green>Shop activated! Now selling <white>" +
+                            item.getType().name().toLowerCase().replace('_', ' ') + "</white>"));
+                        break;
+                    }
+                }
+            }
+        }
 
         // Update visuals
         if (signRenderer != null) {

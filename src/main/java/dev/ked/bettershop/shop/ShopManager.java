@@ -35,6 +35,10 @@ public class ShopManager {
      * Create a shop at the specified location.
      */
     public boolean createShop(Location location, UUID owner, ShopType type, ItemStack item, double price) {
+        return createShop(location, owner, type, item, price, 0);
+    }
+
+    public boolean createShop(Location location, UUID owner, ShopType type, ItemStack item, double price, int buyLimit) {
         // Validate location is a chest
         Block block = location.getBlock();
         if (block.getType() != Material.CHEST && block.getType() != Material.TRAPPED_CHEST) {
@@ -47,7 +51,7 @@ public class ShopManager {
         }
 
         // Create and register shop
-        Shop shop = new Shop(location, owner, type, item, price);
+        Shop shop = new Shop(location, owner, type, item, price, buyLimit);
         registry.registerShop(shop);
 
         return true;
@@ -84,6 +88,12 @@ public class ShopManager {
 
         Inventory inventory = chest.getInventory();
         ItemStack shopItem = shop.getItem();
+
+        // If shop item is null (empty SELL shop), return 0
+        if (shopItem == null) {
+            return 0;
+        }
+
         int count = 0;
 
         for (ItemStack item : inventory.getContents()) {
@@ -102,6 +112,11 @@ public class ShopManager {
     public TransactionResultData processBuyTransaction(Player buyer, Shop shop, int quantity) {
         if (shop.getType() != ShopType.SELL) {
             return new TransactionResultData(TransactionResult.WRONG_SHOP_TYPE);
+        }
+
+        // Check if shop has an item set (not an empty SELL shop)
+        if (shop.getItem() == null) {
+            return new TransactionResultData(TransactionResult.INSUFFICIENT_STOCK);
         }
 
         double totalPrice = shop.getPrice() * quantity;
@@ -163,6 +178,19 @@ public class ShopManager {
     public TransactionResultData processSellTransaction(Player seller, Shop shop, int quantity) {
         if (shop.getType() != ShopType.BUY) {
             return new TransactionResultData(TransactionResult.WRONG_SHOP_TYPE);
+        }
+
+        // Check if shop has reached its buy limit
+        if (shop.getBuyLimit() > 0) {
+            int currentStock = getStock(shop);
+            int remaining = shop.getRemainingBuyLimit(currentStock);
+            if (remaining == 0) {
+                return new TransactionResultData(TransactionResult.CHEST_FULL); // Shop is full
+            }
+            // Limit quantity to remaining space
+            if (quantity > remaining) {
+                quantity = remaining;
+            }
         }
 
         double totalPrice = shop.getPrice() * quantity;

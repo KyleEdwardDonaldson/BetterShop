@@ -99,13 +99,28 @@
             <version>0.100.3.0</version>
             <scope>provided</scope>
         </dependency>
-        <!-- Towns and Nations (using local JAR) -->
-        <dependency>
-            <groupId>org.leralix</groupId>
-            <artifactId>TownsAndNations</artifactId>
-            <version>0.15.4</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/TownsAndNations-0.15.4.jar</systemPath>
-        </dependency>
+        <!-- Towns and Nations (optional - place JAR in libs/ folder) -->
+        <!-- Download from: https://github.com/Leralix/Towns-and-Nations/releases -->
+        <!-- Place TownsAndNations-0.15.4.jar in libs/ folder to enable compilation -->
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>with-tan</id>
+            <activation>
+                <file>
+                    <exists>${project.basedir}/libs/TownsAndNations-0.15.4.jar</exists>
+                </file>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.leralix</groupId>
+                    <artifactId>TownsAndNations</artifactId>
+                    <version>0.15.4</version>
+                    <scope>system</scope>
+                    <systemPath>${project.basedir}/libs/TownsAndNations-0.15.4.jar</systemPath>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 </project>

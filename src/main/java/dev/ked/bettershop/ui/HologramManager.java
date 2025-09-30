@@ -3,6 +3,7 @@ package dev.ked.bettershop.ui;
 import dev.ked.bettershop.config.ConfigManager;
 import dev.ked.bettershop.shop.Shop;
 import dev.ked.bettershop.shop.ShopManager;
+import dev.ked.bettershop.shop.ShopRegistry;
 import dev.ked.bettershop.shop.ShopType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -11,7 +12,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
 
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -20,13 +21,15 @@ import java.util.concurrent.ConcurrentHashMap;
 public class HologramManager {
     private final ConfigManager config;
     private final ShopManager shopManager;
+    private final ShopRegistry shopRegistry;
 
     // Map of shop location -> hologram armor stand
     private final Map<Location, ArmorStand> holograms = new ConcurrentHashMap<>();
 
-    public HologramManager(ConfigManager config, ShopManager shopManager) {
+    public HologramManager(ConfigManager config, ShopManager shopManager, ShopRegistry shopRegistry) {
         this.config = config;
         this.shopManager = shopManager;
+        this.shopRegistry = shopRegistry;
     }
 
     /**
@@ -106,7 +109,7 @@ public class HologramManager {
         TextColor color = shop.getType() == ShopType.BUY ? NamedTextColor.GREEN : NamedTextColor.BLUE;
 
         // Format for SELL shops: 🛒 Diamond - $10 (5 left)
-        // Format for BUY shops: 🛒 Diamond - $10 (Buying)
+        // Format for BUY shops: 🛒 Diamond - $10 (Buying 45/100) or (Buying) if unlimited
         Component name = Component.text("🛒 ", NamedTextColor.YELLOW)
                 .append(Component.text(itemName, NamedTextColor.WHITE))
                 .append(Component.text(" - ", NamedTextColor.GRAY))
@@ -115,7 +118,20 @@ public class HologramManager {
         if (shop.getType() == ShopType.SELL) {
             name = name.append(Component.text(" (" + stock + " left)", NamedTextColor.GRAY));
         } else {
-            name = name.append(Component.text(" (Buying)", NamedTextColor.GRAY));
+            // BUY shop
+            int buyLimit = shop.getBuyLimit();
+            if (buyLimit == 0) {
+                // Unlimited
+                name = name.append(Component.text(" (Buying)", NamedTextColor.GRAY));
+            } else {
+                // Limited
+                int remaining = shop.getRemainingBuyLimit(stock);
+                if (remaining == 0) {
+                    name = name.append(Component.text(" (Full)", NamedTextColor.RED));
+                } else {
+                    name = name.append(Component.text(" (Buying " + remaining + " more)", NamedTextColor.GRAY));
+                }
+            }
         }
 
         armorStand.customName(name);
@@ -123,15 +139,68 @@ public class HologramManager {
 
     /**
      * Get the location for the hologram (above the chest).
+     * Automatically offsets vertically if nearby shops detected to prevent collisions.
      */
     private Location getHologramLocation(Location chestLoc) {
-        return chestLoc.clone().add(0.5, 1.5, 0.5);
+        double baseHeight = 1.5;
+        double verticalOffset = 0.0;
+
+        // Find nearby shops within 3 blocks
+        List<Shop> nearbyShops = getNearbyShops(chestLoc, 3.0);
+
+        if (!nearbyShops.isEmpty()) {
+            // Sort by location to ensure consistent ordering
+            nearbyShops.sort(Comparator.comparingDouble(shop -> {
+                Location loc = shop.getLocation();
+                return loc.getBlockX() * 1000000 + loc.getBlockY() * 1000 + loc.getBlockZ();
+            }));
+
+            // Find the index of the current location in the sorted list
+            int index = 0;
+            for (int i = 0; i < nearbyShops.size(); i++) {
+                Location shopLoc = nearbyShops.get(i).getLocation();
+                if (shopLoc.getBlockX() == chestLoc.getBlockX() &&
+                    shopLoc.getBlockY() == chestLoc.getBlockY() &&
+                    shopLoc.getBlockZ() == chestLoc.getBlockZ()) {
+                    index = i;
+                    break;
+                }
+            }
+
+            // Offset by 0.35 blocks per nearby shop
+            verticalOffset = index * 0.35;
+        }
+
+        return chestLoc.clone().add(0.5, baseHeight + verticalOffset, 0.5);
+    }
+
+    /**
+     * Get nearby shops within a certain radius.
+     */
+    private List<Shop> getNearbyShops(Location location, double radius) {
+        List<Shop> nearby = new ArrayList<>();
+        double radiusSquared = radius * radius;
+
+        for (Shop shop : shopRegistry.getAllShops()) {
+            Location shopLoc = shop.getLocation();
+            if (shopLoc.getWorld().equals(location.getWorld())) {
+                double distanceSquared = shopLoc.distanceSquared(location);
+                if (distanceSquared <= radiusSquared) {
+                    nearby.add(shop);
+                }
+            }
+        }
+
+        return nearby;
     }
 
     /**
      * Get a simple display name for the item.
      */
     private String getItemDisplayName(Shop shop) {
+        if (shop.getItem() == null) {
+            return "Empty Shop";
+        }
         String materialName = shop.getItem().getType().name();
         // Convert DIAMOND_SWORD to Diamond Sword
         String[] parts = materialName.split("_");

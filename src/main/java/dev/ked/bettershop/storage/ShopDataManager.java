@@ -55,6 +55,7 @@ public class ShopDataManager {
                 data.item = serializeItem(shop.getItem());
                 data.price = shop.getPrice();
                 data.earnings = shop.getEarnings();
+                data.buyLimit = shop.getBuyLimit();
                 data.createdAt = shop.getCreatedAt();
 
                 shopDataList.add(data);
@@ -111,7 +112,8 @@ public class ShopDataManager {
                         continue;
                     }
 
-                    Shop shop = new Shop(location, owner, type, item, data.price);
+                    int buyLimit = data.buyLimit != null ? data.buyLimit : 0; // Backward compatibility
+                    Shop shop = new Shop(location, owner, type, item, data.price, buyLimit);
                     shop.setEarnings(data.earnings);
 
                     registry.registerShop(shop);
@@ -175,6 +177,7 @@ public class ShopDataManager {
         String item;
         double price;
         double earnings;
+        Integer buyLimit; // For BUY shops: how many items to buy (0 = unlimited, null for backward compat)
         long createdAt;
     }
 }

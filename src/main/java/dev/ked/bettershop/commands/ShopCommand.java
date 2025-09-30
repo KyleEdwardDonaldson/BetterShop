@@ -93,7 +93,7 @@ public class ShopCommand implements CommandExecutor, TabCompleter, Listener {
         }
 
         if (args.length < 3) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>Usage: /shop create <buy|sell> <price>"));
+            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>Usage: /shop create <buy|sell> <price> [quantity]"));
             return;
         }
 
@@ -119,39 +119,49 @@ public class ShopCommand implements CommandExecutor, TabCompleter, Listener {
             return;
         }
 
-        // For BUY shops, check if item in hand. If not (or if holding a chest), open material selector GUI.
-        ItemStack item = null;
-        if (type == ShopType.BUY) {
-            item = player.getInventory().getItemInMainHand();
-            Material itemType = item.getType();
-            // Open GUI if no item, or if holding a chest (since they're about to place one)
-            if (itemType == Material.AIR || itemType == Material.CHEST || itemType == Material.TRAPPED_CHEST) {
-                // Open material selector GUI
-                player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<gray>Select the item type for your shop..."));
-                materialSelector.openCategorySelector(player, (selectedMaterial) -> {
-                    // Create a temporary item stack
-                    ItemStack selectedItem = new ItemStack(selectedMaterial, 1);
-
-                    // Check limits again after GUI closes
-                    int currentShops = registry.getShopCount(player.getUniqueId());
-                    int maxShops = config.getMaxShopsPerPlayer();
-                    if (currentShops >= maxShops && !player.hasPermission("bettershop.admin")) {
-                        String message = config.getMessage("shop-limit-reached", "limit", String.valueOf(maxShops));
-                        player.sendMessage(miniMessage.deserialize(message));
-                        return;
-                    }
-
-                    // Enter creation mode with selected material
-                    creationMode.put(player.getUniqueId(), new ShopCreationData(type, price, selectedItem));
-
-                    // Format the colored type string
-                    String colorTag = type == ShopType.BUY ? config.getBuyColor() : config.getSellColor();
-                    String coloredType = colorTag + type.name() + "</" + colorTag.substring(1); // <green>BUY</green>
-                    String message = config.getMessage("shop-creation-mode", "type_colored", coloredType);
-                    player.sendMessage(miniMessage.deserialize(message));
-                });
+        // Parse optional quantity (for BUY shops)
+        int buyLimit = 0; // 0 = unlimited
+        if (args.length >= 4) {
+            try {
+                buyLimit = Integer.parseInt(args[3]);
+                if (buyLimit < 0) {
+                    player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>Quantity must be positive!"));
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>Invalid quantity!"));
                 return;
             }
+        }
+
+        // For BUY shops, always open material selector GUI
+        if (type == ShopType.BUY) {
+            // Open material selector GUI
+            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<gray>Select the item type for your shop..."));
+            final int finalBuyLimit = buyLimit; // For lambda
+            materialSelector.openCategorySelector(player, (selectedMaterial) -> {
+                // Create a temporary item stack
+                ItemStack selectedItem = new ItemStack(selectedMaterial, 1);
+
+                // Check limits again after GUI closes
+                int currentShops = registry.getShopCount(player.getUniqueId());
+                int maxShops = config.getMaxShopsPerPlayer();
+                if (currentShops >= maxShops && !player.hasPermission("bettershop.admin")) {
+                    String message = config.getMessage("shop-limit-reached", "limit", String.valueOf(maxShops));
+                    player.sendMessage(miniMessage.deserialize(message));
+                    return;
+                }
+
+                // Enter creation mode with selected material
+                creationMode.put(player.getUniqueId(), new ShopCreationData(type, price, selectedItem, finalBuyLimit));
+
+                // Format the colored type string
+                String colorTag = type == ShopType.BUY ? config.getBuyColor() : config.getSellColor();
+                String coloredType = colorTag + type.name() + "</" + colorTag.substring(1); // <green>BUY</green>
+                String message = config.getMessage("shop-creation-mode", "type_colored", coloredType);
+                player.sendMessage(miniMessage.deserialize(message));
+            });
+            return;
         }
 
         // Check world
@@ -170,8 +180,8 @@ public class ShopCommand implements CommandExecutor, TabCompleter, Listener {
         }
 
         // Enter creation mode (SELL shops don't have an item yet, it's detected from chest contents)
-        ItemStack itemToStore = (item != null) ? item.clone() : null;
-        creationMode.put(player.getUniqueId(), new ShopCreationData(type, price, itemToStore));
+        // Only SELL shops reach this point (BUY shops return early after opening GUI)
+        creationMode.put(player.getUniqueId(), new ShopCreationData(type, price, null));
 
         // Format the colored type string
         String colorTag = type == ShopType.BUY ? config.getBuyColor() : config.getSellColor();
@@ -247,7 +257,7 @@ public class ShopCommand implements CommandExecutor, TabCompleter, Listener {
             }
         }
 
-        // For SELL shops, detect item from chest contents
+        // For SELL shops, detect item from chest contents (allow empty chests for safety)
         ItemStack shopItem = data.item;
         if (data.type == ShopType.SELL) {
             org.bukkit.block.Chest chest = (org.bukkit.block.Chest) block.getState();
@@ -260,18 +270,15 @@ public class ShopCommand implements CommandExecutor, TabCompleter, Listener {
                 }
             }
 
-            if (firstItem == null) {
-                player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>Chest is empty! Add items first, then run the command again."));
-                creationMode.remove(player.getUniqueId());
-                return;
+            if (firstItem != null) {
+                shopItem = firstItem.clone();
+                shopItem.setAmount(1);
             }
-
-            shopItem = firstItem.clone();
-            shopItem.setAmount(1);
+            // If firstItem is null, shopItem remains null (empty shop, will be updated when items are added)
         }
 
         // Create shop
-        boolean success = shopManager.createShop(block.getLocation(), player.getUniqueId(), data.type, shopItem, data.price);
+        boolean success = shopManager.createShop(block.getLocation(), player.getUniqueId(), data.type, shopItem, data.price, data.buyLimit);
 
         if (success) {
             Shop shop = shopManager.getShopAt(block.getLocation()).orElseThrow();
@@ -280,8 +287,17 @@ public class ShopCommand implements CommandExecutor, TabCompleter, Listener {
             signRenderer.createOrUpdateSign(shop);
             hologramManager.createHologram(shop);
 
-            String message = config.getMessage("shop-created", "price", String.format("%.2f", data.price));
+            String itemName = shopItem != null ? shopItem.getType().name().toLowerCase().replace('_', ' ') : "any item";
+            String message = config.getMessage("shop-created",
+                "price", String.format("%.2f", data.price),
+                "item", itemName);
             player.sendMessage(miniMessage.deserialize(message));
+
+            // If shop is empty, remind them to add items
+            if (shopItem == null) {
+                player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<yellow>Add items to the chest to activate your shop!"));
+            }
+
             player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 2.0f);
         } else {
             player.sendMessage(miniMessage.deserialize(config.getMessage("shop-creation-failed")));
@@ -496,11 +512,20 @@ public class ShopCommand implements CommandExecutor, TabCompleter, Listener {
         final ShopType type;
         final double price;
         final ItemStack item;
+        final int buyLimit; // For BUY shops: how many items to buy (0 = unlimited)
 
         ShopCreationData(ShopType type, double price, ItemStack item) {
             this.type = type;
             this.price = price;
             this.item = item;
+            this.buyLimit = 0; // Unlimited
+        }
+
+        ShopCreationData(ShopType type, double price, ItemStack item, int buyLimit) {
+            this.type = type;
+            this.price = price;
+            this.item = item;
+            this.buyLimit = buyLimit;
         }
     }
 }

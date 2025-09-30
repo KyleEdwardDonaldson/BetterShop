@@ -69,7 +69,9 @@ Desktop.ini
 # Local development files
 Towns-and-Nations-0.15.4/
 Towns-and-Nations-0.15.4.zip
-TownsAndNations-0.15.4.jar
+
+# Libraries folder - track folder but not JAR files
+libs/*.jar
 
 # Plugin development
 test-server/

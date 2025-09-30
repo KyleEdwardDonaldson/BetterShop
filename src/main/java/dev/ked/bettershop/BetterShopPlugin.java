@@ -60,7 +60,7 @@ public class BetterShopPlugin extends JavaPlugin {
         dataManager = new ShopDataManager(getDataFolder().toPath(), getLogger());
 
         signRenderer = new SignRenderer(configManager, shopManager);
-        hologramManager = new HologramManager(configManager, shopManager);
+        hologramManager = new HologramManager(configManager, shopManager, shopRegistry);
         materialSelector = new MaterialSelectorGUI();
         tradeGUI = new TradeGUI(configManager, shopManager, economy);
 

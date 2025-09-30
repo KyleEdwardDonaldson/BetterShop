@@ -86,12 +86,23 @@ public class SignRenderer {
         // Line 3: Price
         Component line3 = miniMessage.deserialize("<yellow>$" + formatPrice(shop.getPrice()));
 
-        // Line 4: Stock (only for SELL shops) or "Buying" for BUY shops
+        // Line 4: Stock (for SELL shops) or Buy limit (for BUY shops)
         Component line4;
         if (shop.getType() == ShopType.SELL) {
             line4 = miniMessage.deserialize("<gray>Stock: <white>" + stock);
         } else {
-            line4 = miniMessage.deserialize("<gray>Buying");
+            // BUY shop
+            int buyLimit = shop.getBuyLimit();
+            if (buyLimit == 0) {
+                line4 = miniMessage.deserialize("<gray>Buying");
+            } else {
+                int remaining = shop.getRemainingBuyLimit(stock);
+                if (remaining == 0) {
+                    line4 = miniMessage.deserialize("<red>Full");
+                } else {
+                    line4 = miniMessage.deserialize("<gray>Buying <white>" + remaining);
+                }
+            }
         }
 
         sign.line(0, line1);
@@ -165,6 +176,9 @@ public class SignRenderer {
      * Get a display name for the item.
      */
     private String getItemDisplayName(Shop shop) {
+        if (shop.getItem() == null) {
+            return "Empty Shop";
+        }
         Component itemName = shop.getItem().displayName();
         return MiniMessage.miniMessage().stripTags(MiniMessage.miniMessage().serialize(itemName));
     }

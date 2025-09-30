@@ -9,19 +9,42 @@ public class Shop {
     private final Location location;
     private final UUID owner;
     private final ShopType type;
-    private final ItemStack item;
+    private ItemStack item; // Not final - can be set later for empty SELL shops
     private double price;
     private double earnings;
+    private int buyLimit; // For BUY shops: how many items owner wants to buy (0 = unlimited)
     private final long createdAt;
 
     public Shop(Location location, UUID owner, ShopType type, ItemStack item, double price) {
         this.location = location;
         this.owner = owner;
         this.type = type;
-        this.item = item.clone();
-        this.item.setAmount(1); // Normalize to single item
+        if (item != null) {
+            this.item = item.clone();
+            this.item.setAmount(1); // Normalize to single item
+        } else {
+            this.item = null; // Empty shop (will be set later)
+        }
         this.price = price;
         this.earnings = 0.0;
+        this.buyLimit = 0; // 0 = unlimited
+        this.createdAt = System.currentTimeMillis();
+    }
+
+    // Constructor with buy limit
+    public Shop(Location location, UUID owner, ShopType type, ItemStack item, double price, int buyLimit) {
+        this.location = location;
+        this.owner = owner;
+        this.type = type;
+        if (item != null) {
+            this.item = item.clone();
+            this.item.setAmount(1); // Normalize to single item
+        } else {
+            this.item = null; // Empty shop (will be set later)
+        }
+        this.price = price;
+        this.earnings = 0.0;
+        this.buyLimit = buyLimit;
         this.createdAt = System.currentTimeMillis();
     }
 
@@ -38,7 +61,16 @@ public class Shop {
     }
 
     public ItemStack getItem() {
-        return item.clone();
+        return item != null ? item.clone() : null;
+    }
+
+    public void setItem(ItemStack item) {
+        if (item != null) {
+            this.item = item.clone();
+            this.item.setAmount(1); // Normalize to single item
+        } else {
+            this.item = null;
+        }
     }
 
     public double getPrice() {
@@ -61,6 +93,28 @@ public class Shop {
         this.earnings = earnings;
     }
 
+    public int getBuyLimit() {
+        return buyLimit;
+    }
+
+    public void setBuyLimit(int buyLimit) {
+        this.buyLimit = buyLimit;
+    }
+
+    /**
+     * Get remaining buy limit (how many more items the shop will buy).
+     * Only applicable to BUY shops.
+     * @param currentStock Current stock in the chest
+     * @return Remaining items to buy (0 if unlimited or SELL shop)
+     */
+    public int getRemainingBuyLimit(int currentStock) {
+        if (type != ShopType.BUY || buyLimit == 0) {
+            return 0; // Unlimited or not a buy shop
+        }
+        int remaining = buyLimit - currentStock;
+        return Math.max(0, remaining);
+    }
+
     public long getCreatedAt() {
         return createdAt;
     }
@@ -81,7 +135,7 @@ public class Shop {
                 "location=" + location +
                 ", owner=" + owner +
                 ", type=" + type +
-                ", item=" + item.getType() +
+                ", item=" + (item != null ? item.getType() : "none") +
                 ", price=" + price +
                 ", earnings=" + earnings +
                 '}';

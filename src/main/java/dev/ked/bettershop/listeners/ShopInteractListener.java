@@ -117,6 +117,7 @@ public class ShopInteractListener implements Listener {
                 "quantity", "1",
                 "item", itemName,
                 "total", String.format("%.2f", shop.getPrice()),
+                "price", String.format("%.2f", shop.getPrice()),
                 "balance", String.format("%.2f", economy.getBalance(player)),
                 "stock", String.valueOf(shopManager.getStock(shop))
         );
