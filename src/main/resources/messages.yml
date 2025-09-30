@@ -1,0 +1,79 @@
+# BetterShop Messages
+# Supports MiniMessage format: https://docs.advntr.dev/minimessage/format.html
+# Placeholders: {price}, {item}, {quantity}, {total}, {stock}, {owner}, {type}
+
+prefix: "<gradient:#00ff00:#00aa00>[BetterShop]</gradient> <gray>"
+
+# Shop creation
+shop-creation-mode: "{prefix}Now <white>place a chest</white> or <white>right-click an existing chest</white> to create your {type_colored} shop"
+shop-created: "{prefix}Shop created successfully! Price: <yellow>${price}</yellow> per item"
+shop-creation-failed: "{prefix}<red>Failed to create shop. Make sure you're clicking a chest!"
+shop-already-exists: "{prefix}<red>A shop already exists at this location!"
+shop-limit-reached: "{prefix}<red>You've reached the maximum number of shops ({limit})"
+invalid-price: "{prefix}<red>Invalid price! Must be a positive number"
+no-item-in-hand: "{prefix}<red>You must hold an item to create a BUY shop!"
+chest-empty-sell: "{prefix}<red>Chest is empty! Add items to the chest before creating a SELL shop."
+world-disabled: "{prefix}<red>Shops are not allowed in this world!"
+
+# Shop removal
+shop-removed: "{prefix}Shop removed successfully"
+shop-remove-earnings: "{prefix}Collected <yellow>${earnings}</yellow> from removed shop"
+no-shop-found: "{prefix}<red>No shop found at this location!"
+not-shop-owner: "{prefix}<red>You don't own this shop!"
+
+# Shop info
+shop-info-header: "{prefix}<gold>===== Shop Info ====="
+shop-info-type: "<gray>Type: {color}{type}</color>"
+shop-info-item: "<gray>Item: <white>{item}"
+shop-info-price: "<gray>Price: <yellow>${price}</yellow> per item"
+shop-info-stock: "<gray>Stock: <white>{stock}</white> items"
+shop-info-earnings: "<gray>Earnings: <yellow>${earnings}</yellow>"
+shop-info-owner: "<gray>Owner: <white>{owner}</white>"
+
+# Transactions - Buy
+purchase-success: "{prefix}Purchased <white>{quantity}x {item}</white> for <yellow>${total}</yellow>"
+purchase-insufficient-funds: "{prefix}<red>You need <yellow>${total}</yellow> but only have <yellow>${balance}</yellow>!"
+purchase-insufficient-stock: "{prefix}<red>Shop only has <white>{stock}</white> items in stock!"
+purchase-no-space: "{prefix}<red>Not enough inventory space!"
+
+# Transactions - Sell
+sell-success: "{prefix}Sold <white>{quantity}x {item}</white> for <yellow>${total}</yellow>"
+sell-shop-no-funds: "{prefix}<red>Shop doesn't have enough money to buy your items!"
+sell-insufficient-items: "{prefix}<red>You don't have enough items to sell!"
+sell-chest-full: "{prefix}<red>Shop chest is full!"
+
+# Earnings collection
+earnings-collected: "{prefix}Collected <yellow>${earnings}</yellow> from your shop"
+no-earnings: "{prefix}<red>This shop has no earnings to collect!"
+
+# Shop list
+shop-list-header: "{prefix}<gold>===== Your Shops ({count}/{max}) ====="
+shop-list-entry: "<gray>#{index} - {color}{type}</color> <white>{item}</white> @ <yellow>${price}</yellow> - {world} ({x}, {y}, {z})"
+shop-list-empty: "{prefix}<gray>You don't have any shops yet. Use <white>/shop create</white> to make one!"
+
+# Errors
+wrong-shop-type: "{prefix}<red>This is a {type} shop!"
+transaction-failed: "{prefix}<red>Transaction failed! Please try again"
+not-enough-money: "{prefix}<red>You don't have enough money!"
+
+# Admin
+config-reloaded: "{prefix}<green>Configuration reloaded successfully!"
+admin-shop-removed: "{prefix}Forcefully removed shop owned by <white>{owner}</white>"
+
+# GUI
+gui-title-buy: "Buy {item}"
+gui-title-sell: "Sell {item}"
+gui-item-name: "<white>{item}"
+gui-item-lore-price: "<gray>Price: <yellow>${price}</yellow> each"
+gui-item-lore-stock: "<gray>Stock: <white>{stock}</white>"
+gui-item-lore-total: "<gold>Total: <yellow>${total}</yellow>"
+gui-confirm: "<green><bold>✓ Confirm Purchase"
+gui-cancel: "<red><bold>✗ Cancel"
+gui-quantity: "<yellow>{quantity}x"
+
+# Territory integration
+territory-no-wilderness: "{prefix}<red>Cannot create shops in wilderness!"
+territory-no-permission: "{prefix}<red>You don't have permission to create shops in {territory}!"
+territory-commercial-required: "{prefix}<red>Shops require a commercial or embassy plot!"
+territory-tax-applied: "{prefix}<gray>Tax paid: <yellow>${amount}</yellow> to {territory}"
+territory-transaction-tax: "{prefix}<gray>Transaction tax: <yellow>${amount}</yellow> ({territory})"

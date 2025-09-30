@@ -1,0 +1,62 @@
+# BetterShop Configuration
+
+# Economy settings
+economy:
+  enabled: true
+  transactionTax: 0.0  # Percentage tax on sales (0.05 = 5%)
+
+# Shop limits
+limits:
+  maxShopsPerPlayer: 10
+  maxShopDistance: 5.0  # Max distance to interact with shop
+
+# Visual settings
+visuals:
+  hologramsEnabled: true
+  particlesEnabled: true
+  signFormat:
+    buyColor: "<green>"
+    sellColor: "<blue>"
+
+# GUI settings
+gui:
+  enabled: true
+  quickBuyOnShiftClick: true  # Allow instant purchase with shift-click
+
+# Allowed worlds (empty list = all worlds)
+enabledWorlds:
+  - world
+  - world_nether
+  - world_the_end
+
+# Protection settings
+protection:
+  preventHoppers: true     # Prevent hoppers from being placed near shops
+  preventExplosions: true  # Prevent explosions from damaging shops
+  preventPistons: true     # Prevent pistons from moving shop blocks
+
+# Towny Integration
+towny:
+  enabled: false  # Enable Towny integration
+  allowWilderness: true  # Allow shops in wilderness (default: true)
+  requireCommercialPlot: false  # Require commercial/embassy plots (default: false)
+  crossNationRestrictions: false  # Prevent cross-nation trading
+  shopTax:
+    enabled: false  # Tax on shop earnings
+    rate: 0.05  # 5% of earnings go to town treasury
+  transactionTax:
+    enabled: false  # Tax on purchases by outsiders
+    outsiderRate: 0.10  # 10% tax for non-town members
+
+# Towns and Nations Integration (TaN by Leralix)
+townsandnations:
+  enabled: false  # Enable Towns and Nations integration
+  allowWilderness: false  # Allow shops in unclaimed territory (default: false)
+  shopTax:
+    enabled: false  # Tax on shop earnings
+    rate: 0.05  # 5% of earnings go to town treasury
+  transactionTax:
+    enabled: false  # Tax on purchases by outsiders
+    outsiderRate: 0.15  # 15% tax for non-town members
+  treasuryFunding:
+    enabled: false  # Allow town treasury to fund BUY shops

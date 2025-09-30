@@ -1,0 +1,51 @@
+name: BetterShop
+version: '${project.version}'
+main: dev.ked.bettershop.BetterShopPlugin
+api-version: '1.21'
+description: Intuitive player-to-player shop system with GUI and holograms
+author: Kyle Donaldson
+website: https://ked.dev
+
+depend:
+  - Vault
+
+softdepend:
+  - PlaceholderAPI
+  - Towny
+  - TownsAndNations
+
+commands:
+  shop:
+    description: Main shop command
+    usage: /<command> [create|remove|info|collect|list|reload]
+    aliases: [bshop, playershop]
+    permission: bettershop.use
+
+permissions:
+  bettershop.use:
+    description: Allows basic shop usage
+    default: true
+  bettershop.create:
+    description: Allows creating shops
+    default: true
+  bettershop.remove:
+    description: Allows removing own shops
+    default: true
+  bettershop.info:
+    description: Allows viewing shop info
+    default: true
+  bettershop.list:
+    description: Allows listing own shops
+    default: true
+  bettershop.admin:
+    description: All admin permissions
+    default: op
+    children:
+      bettershop.admin.reload: true
+      bettershop.admin.remove: true
+  bettershop.admin.reload:
+    description: Reload plugin configuration
+    default: op
+  bettershop.admin.remove:
+    description: Remove any shop
+    default: op
