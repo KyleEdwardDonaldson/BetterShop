@@ -73,7 +73,9 @@ public class ShopDataManager {
             String json = gson.toJson(shopDataList);
             Files.writeString(dataFile, json);
 
-            logger.info("Saved " + shopDataList.size() + " shops to disk");
+            if (shopDataList.size() > 0) {
+                logger.info("Saved " + shopDataList.size() + " shops to disk");
+            }
         } catch (IOException e) {
             logger.severe("Failed to save shops: " + e.getMessage());
             e.printStackTrace();
