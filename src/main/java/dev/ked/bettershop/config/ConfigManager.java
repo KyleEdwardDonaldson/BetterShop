@@ -66,11 +66,60 @@ public class ConfigManager {
 
     // Shop limits
     public int getMaxShopsPerPlayer() {
-        return config.getInt("limits.maxShopsPerPlayer", 10);
+        return config.getInt("shops.maxShopsPerPlayer", config.getInt("limits.maxShopsPerPlayer", 3));
+    }
+
+    public int getMaxListingsPerShop() {
+        return config.getInt("shops.maxListingsPerShop", 20);
+    }
+
+    public String getDefaultShopName() {
+        return config.getString("shops.defaultShopName", "{player}'s Shop");
     }
 
     public double getMaxShopDistance() {
         return config.getDouble("limits.maxShopDistance", 5.0);
+    }
+
+    // Shop Mode settings
+    public boolean isShopModeEnabled() {
+        return config.getBoolean("shopMode.enabled", true);
+    }
+
+    public int getShopModeTimeoutMinutes() {
+        return config.getInt("shopMode.timeoutMinutes", 10);
+    }
+
+    public double getShopModeMaxDistance() {
+        return config.getDouble("shopMode.maxDistance", 100.0);
+    }
+
+    public boolean shouldSaveHotbar() {
+        return config.getBoolean("shopMode.saveHotbar", true);
+    }
+
+    // Territory settings
+    public boolean isTerritoryAutoDetectEnabled() {
+        return config.getBoolean("territory.autoDetect", true);
+    }
+
+    public boolean isTerritoryRestrictionEnabled() {
+        return config.getBoolean("territory.restrictToTerritory", true);
+    }
+
+    public boolean isCommercialPlotRequired() {
+        return config.getBoolean("territory.requireCommercialPlot", false);
+    }
+
+    public boolean isWildernessAllowed() {
+        // Check both old and new config locations for backward compatibility
+        if (isTownyEnabled()) {
+            return config.getBoolean("territory.allowWilderness", getTownyAllowWilderness());
+        }
+        if (isTownsAndNationsEnabled()) {
+            return config.getBoolean("territory.allowWilderness", getTownsAndNationsAllowWilderness());
+        }
+        return config.getBoolean("territory.allowWilderness", false);
     }
 
     // Visual settings

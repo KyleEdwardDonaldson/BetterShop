@@ -65,4 +65,10 @@ public interface TerritoryManager {
      * Check if location is in wilderness/unclaimed.
      */
     boolean isWilderness(Location location);
+
+    /**
+     * Get the territory ID at this location (for shop association).
+     * @return Territory ID string, or null if wilderness
+     */
+    String getTerritoryId(Location location);
 }

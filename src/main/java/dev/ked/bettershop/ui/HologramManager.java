@@ -1,88 +1,88 @@
 package dev.ked.bettershop.ui;
 
 import dev.ked.bettershop.config.ConfigManager;
-import dev.ked.bettershop.shop.Shop;
-import dev.ked.bettershop.shop.ShopManager;
-import dev.ked.bettershop.shop.ShopRegistry;
-import dev.ked.bettershop.shop.ShopType;
+import dev.ked.bettershop.integration.MythicItemHandler;
+import dev.ked.bettershop.shop.*;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Location;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Manages hologram displays above shops using armor stands.
+ * Manages hologram displays above listings using armor stands.
  */
 public class HologramManager {
     private final ConfigManager config;
-    private final ShopManager shopManager;
-    private final ShopRegistry shopRegistry;
+    private final ShopRegistry registry;
+    private MythicItemHandler mythicItemHandler;
+    private final MiniMessage miniMessage = MiniMessage.miniMessage();
 
-    // Map of shop location -> hologram armor stand
+    // Map of listing location -> hologram armor stand
     private final Map<Location, ArmorStand> holograms = new ConcurrentHashMap<>();
 
-    public HologramManager(ConfigManager config, ShopManager shopManager, ShopRegistry shopRegistry) {
+    public HologramManager(ConfigManager config, ShopRegistry registry) {
         this.config = config;
-        this.shopManager = shopManager;
-        this.shopRegistry = shopRegistry;
+        this.registry = registry;
+    }
+
+    public void setMythicItemHandler(MythicItemHandler mythicItemHandler) {
+        this.mythicItemHandler = mythicItemHandler;
     }
 
     /**
-     * Create a hologram for a shop.
+     * Create a hologram for a listing.
      */
-    public void createHologram(Shop shop) {
+    public void createHologram(Listing listing) {
         if (!config.areHologramsEnabled()) {
             return;
         }
 
         // Remove existing hologram if present
-        removeHologram(shop);
+        removeHologram(listing);
 
-        Location hologramLoc = getHologramLocation(shop.getLocation());
+        Location hologramLoc = getHologramLocation(listing.getLocation());
         ArmorStand armorStand = (ArmorStand) hologramLoc.getWorld().spawnEntity(hologramLoc, EntityType.ARMOR_STAND);
 
         // Configure armor stand
         armorStand.setVisible(false);
         armorStand.setGravity(false);
-        armorStand.setInvulnerable(true);
         armorStand.setMarker(true);
         armorStand.setCustomNameVisible(true);
-        armorStand.setPersistent(false);
+        armorStand.setInvulnerable(true);
+        armorStand.setPersistent(true);
 
-        updateHologramText(armorStand, shop);
+        // Set custom name
+        updateHologramText(armorStand, listing);
 
-        holograms.put(shop.getLocation(), armorStand);
+        // Store reference
+        holograms.put(listing.getLocation(), armorStand);
     }
 
     /**
-     * Update the hologram text for a shop.
+     * Update hologram text for a listing.
      */
-    public void updateHologram(Shop shop) {
-        if (!config.areHologramsEnabled()) {
-            return;
-        }
-
-        ArmorStand hologram = holograms.get(shop.getLocation());
-        if (hologram != null && hologram.isValid()) {
-            updateHologramText(hologram, shop);
+    public void updateHologram(Listing listing) {
+        ArmorStand armorStand = holograms.get(listing.getLocation());
+        if (armorStand != null && armorStand.isValid()) {
+            updateHologramText(armorStand, listing);
         } else {
-            // Recreate if missing
-            createHologram(shop);
+            createHologram(listing);
         }
     }
 
     /**
-     * Remove a hologram for a shop.
+     * Remove a hologram for a listing.
      */
-    public void removeHologram(Shop shop) {
-        ArmorStand hologram = holograms.remove(shop.getLocation());
-        if (hologram != null && hologram.isValid()) {
-            hologram.remove();
+    public void removeHologram(Listing listing) {
+        ArmorStand armorStand = holograms.remove(listing.getLocation());
+        if (armorStand != null && armorStand.isValid()) {
+            armorStand.remove();
         }
     }
 
@@ -90,146 +90,109 @@ public class HologramManager {
      * Remove all holograms.
      */
     public void removeAllHolograms() {
-        for (ArmorStand hologram : holograms.values()) {
-            if (hologram.isValid()) {
-                hologram.remove();
+        for (ArmorStand armorStand : holograms.values()) {
+            if (armorStand.isValid()) {
+                armorStand.remove();
             }
         }
         holograms.clear();
     }
 
     /**
-     * Update the custom name of a hologram armor stand.
+     * Update hologram text based on listing data.
      */
-    private void updateHologramText(ArmorStand armorStand, Shop shop) {
-        String itemName = getItemDisplayName(shop);
-        int stock = shopManager.getStock(shop);
-        String priceStr = formatPrice(shop.getPrice());
+    private void updateHologramText(ArmorStand armorStand, Listing listing) {
+        // Get shop name
+        String shopName = "Unknown Shop";
+        Optional<ShopEntity> shopOpt = registry.getShopById(listing.getShopId());
+        if (shopOpt.isPresent()) {
+            shopName = shopOpt.get().getName();
+        }
 
-        TextColor color = shop.getType() == ShopType.BUY ? NamedTextColor.GREEN : NamedTextColor.BLUE;
+        // Get stock
+        int stock = getStock(listing);
 
-        // Format for SELL shops: 🛒 Diamond - $10 (Stock: 5, 2 in transit)
-        // Format for BUY shops: 🛒 Diamond - $10 (Buying 45/100) or (Buying) if unlimited
-        Component name = Component.text("🛒 ", NamedTextColor.YELLOW)
-                .append(Component.text(itemName, NamedTextColor.WHITE))
-                .append(Component.text(" - ", NamedTextColor.GRAY))
-                .append(Component.text("$" + priceStr, color));
+        // Get item name
+        String itemName = getItemDisplayName(listing);
+        NamedTextColor typeColor = listing.getType() == ListingType.SELL ? NamedTextColor.GREEN : NamedTextColor.BLUE;
 
-        if (shop.getType() == ShopType.SELL) {
-            int reservedStock = shop.getTotalReservedStock();
-            if (reservedStock > 0) {
-                // Show "Stock: X, Y in transit"
-                name = name.append(Component.text(" (Stock: " + stock + ", ", NamedTextColor.GRAY))
-                        .append(Component.text(reservedStock + " in transit", NamedTextColor.YELLOW))
-                        .append(Component.text(")", NamedTextColor.GRAY));
-            } else {
-                name = name.append(Component.text(" (" + stock + " left)", NamedTextColor.GRAY));
+        Component hologramText = Component.text("🛒 ", NamedTextColor.GOLD)
+                .append(Component.text(shopName, NamedTextColor.WHITE))
+                .append(Component.text(" - ", NamedTextColor.DARK_GRAY))
+                .append(Component.text(itemName, typeColor))
+                .append(Component.text(" $", NamedTextColor.GOLD))
+                .append(Component.text(String.format("%.0f", listing.getPrice()), NamedTextColor.YELLOW))
+                .append(Component.text(" (", NamedTextColor.GRAY))
+                .append(Component.text(stock, NamedTextColor.WHITE))
+                .append(Component.text(")", NamedTextColor.GRAY));
+
+        armorStand.customName(hologramText);
+    }
+
+    /**
+     * Get display name for an item (handles both vanilla and mythic items).
+     */
+    private String getItemDisplayName(Listing listing) {
+        if (listing.isMythicItem() && mythicItemHandler != null) {
+            ItemStack mythicItem = mythicItemHandler.getMythicItem(listing.getMythicItemId(), 1);
+            if (mythicItem != null && mythicItem.getItemMeta().hasDisplayName()) {
+                // Remove formatting codes for hologram display
+                Component displayName = mythicItem.getItemMeta().displayName();
+                if (displayName != null) {
+                    return miniMessage.stripTags(miniMessage.serialize(displayName));
+                }
             }
-        } else {
-            // BUY shop
-            int buyLimit = shop.getBuyLimit();
-            if (buyLimit == 0) {
-                // Unlimited
-                name = name.append(Component.text(" (Buying)", NamedTextColor.GRAY));
-            } else {
-                // Limited
-                int remaining = shop.getRemainingBuyLimit(stock);
-                if (remaining == 0) {
-                    name = name.append(Component.text(" (Full)", NamedTextColor.RED));
-                } else {
-                    name = name.append(Component.text(" (Buying " + remaining + " more)", NamedTextColor.GRAY));
+            return listing.getMythicItemId();
+        } else if (listing.getItem() != null) {
+            return listing.getItem().getType().name().toLowerCase().replace('_', ' ');
+        }
+        return "unknown";
+    }
+
+    /**
+     * Get stock for a listing.
+     */
+    private int getStock(Listing listing) {
+        org.bukkit.block.Block block = listing.getLocation().getBlock();
+        if (!(block.getState() instanceof org.bukkit.block.Chest chest)) {
+            return 0;
+        }
+
+        int count = 0;
+
+        // Handle mythic items
+        if (listing.isMythicItem() && mythicItemHandler != null) {
+            for (ItemStack item : chest.getInventory().getContents()) {
+                if (item != null && mythicItemHandler.isMythicItem(item, listing.getMythicItemId())) {
+                    count += item.getAmount();
+                }
+            }
+        } else if (listing.getItem() != null) {
+            // Handle vanilla items
+            for (ItemStack item : chest.getInventory().getContents()) {
+                if (item != null && item.isSimilar(listing.getItem())) {
+                    count += item.getAmount();
                 }
             }
         }
 
-        armorStand.customName(name);
+        return count;
     }
 
     /**
-     * Get the location for the hologram (above the chest).
-     * Automatically offsets vertically if nearby shops detected to prevent collisions.
+     * Get the location for a hologram above a chest.
      */
-    private Location getHologramLocation(Location chestLoc) {
-        double baseHeight = 1.5;
-        double verticalOffset = 0.0;
-
-        // Find nearby shops within 3 blocks
-        List<Shop> nearbyShops = getNearbyShops(chestLoc, 3.0);
-
-        if (!nearbyShops.isEmpty()) {
-            // Sort by location to ensure consistent ordering
-            nearbyShops.sort(Comparator.comparingDouble(shop -> {
-                Location loc = shop.getLocation();
-                return loc.getBlockX() * 1000000 + loc.getBlockY() * 1000 + loc.getBlockZ();
-            }));
-
-            // Find the index of the current location in the sorted list
-            int index = 0;
-            for (int i = 0; i < nearbyShops.size(); i++) {
-                Location shopLoc = nearbyShops.get(i).getLocation();
-                if (shopLoc.getBlockX() == chestLoc.getBlockX() &&
-                    shopLoc.getBlockY() == chestLoc.getBlockY() &&
-                    shopLoc.getBlockZ() == chestLoc.getBlockZ()) {
-                    index = i;
-                    break;
-                }
-            }
-
-            // Offset by 0.35 blocks per nearby shop
-            verticalOffset = index * 0.35;
-        }
-
-        return chestLoc.clone().add(0.5, baseHeight + verticalOffset, 0.5);
+    private Location getHologramLocation(Location chestLocation) {
+        return chestLocation.clone().add(0.5, 1.5, 0.5);
     }
 
     /**
-     * Get nearby shops within a certain radius.
+     * Clean up invalid holograms.
      */
-    private List<Shop> getNearbyShops(Location location, double radius) {
-        List<Shop> nearby = new ArrayList<>();
-        double radiusSquared = radius * radius;
-
-        for (Shop shop : shopRegistry.getAllShops()) {
-            Location shopLoc = shop.getLocation();
-            if (shopLoc.getWorld().equals(location.getWorld())) {
-                double distanceSquared = shopLoc.distanceSquared(location);
-                if (distanceSquared <= radiusSquared) {
-                    nearby.add(shop);
-                }
-            }
-        }
-
-        return nearby;
-    }
-
-    /**
-     * Get a simple display name for the item.
-     */
-    private String getItemDisplayName(Shop shop) {
-        if (shop.getItem() == null) {
-            return "Empty Shop";
-        }
-        String materialName = shop.getItem().getType().name();
-        // Convert DIAMOND_SWORD to Diamond Sword
-        String[] parts = materialName.split("_");
-        StringBuilder result = new StringBuilder();
-        for (String part : parts) {
-            if (result.length() > 0) {
-                result.append(" ");
-            }
-            result.append(part.charAt(0)).append(part.substring(1).toLowerCase());
-        }
-        return result.toString();
-    }
-
-    /**
-     * Format price for display.
-     */
-    private String formatPrice(double price) {
-        if (price == (long) price) {
-            return String.format("%d", (long) price);
-        } else {
-            return String.format("%.2f", price);
-        }
+    public void cleanupInvalidHolograms() {
+        holograms.entrySet().removeIf(entry -> {
+            ArmorStand stand = entry.getValue();
+            return stand == null || !stand.isValid();
+        });
     }
 }

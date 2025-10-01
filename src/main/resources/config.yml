@@ -1,5 +1,25 @@
 # BetterShop Configuration
 
+# Shop settings
+shops:
+  maxShopsPerPlayer: 3          # Maximum shops per player
+  maxListingsPerShop: 20        # Maximum listings per shop
+  defaultShopName: "{player}'s Shop"  # Default shop name template
+
+# Shop Mode settings
+shopMode:
+  enabled: true                 # Enable shop mode system
+  timeoutMinutes: 10            # Auto-exit after inactivity (minutes)
+  maxDistance: 100.0            # Max distance from entry point (blocks)
+  saveHotbar: true              # Save player's hotbar on mode entry
+
+# Territory integration
+territory:
+  autoDetect: true              # Auto-detect territory on shop creation
+  restrictToTerritory: true     # Require all listings in same territory
+  requireCommercialPlot: false  # Require commercial plots (Towny only)
+  allowWilderness: false        # Allow shops in wilderness
+
 # Economy settings
 economy:
   enabled: true
@@ -7,7 +27,6 @@ economy:
 
 # Shop limits
 limits:
-  maxShopsPerPlayer: 10
   maxShopDistance: 5.0  # Max distance to interact with shop
 
 # Visual settings

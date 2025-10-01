@@ -5,11 +5,17 @@
 prefix: "<gradient:#00ff00:#00aa00>[BetterShop]</gradient> <gray>"
 
 # Shop creation
-shop-creation-mode: "{prefix}Now <white>place a chest</white> or <white>right-click an existing chest</white> to create your {type_colored} shop"
-shop-created: "{prefix}Shop created successfully! Price: <yellow>${price}</yellow> per <white>{item}</white>"
-shop-creation-failed: "{prefix}<red>Failed to create shop. Make sure you're clicking a chest!"
+shop-created: "{prefix}<green>Shop '{shop_name}' created successfully!"
+shop-mode-entered: "{prefix}<gray>Entered shop mode: <white>{name}"
+shop-mode-exited: "{prefix}<gray>Exited shop mode."
+shop-creation-failed: "{prefix}<red>Failed to create shop!"
 shop-already-exists: "{prefix}<red>A shop already exists at this location!"
 shop-limit-reached: "{prefix}<red>You've reached the maximum number of shops ({limit})"
+shop-name-taken: "{prefix}<red>You already have a shop named '{shop_name}'!"
+
+# Listing creation
+listing-created: "{prefix}<green>Listing created: {type} {item} @ <yellow>${price}</yellow>"
+listing-limit-reached: "{prefix}<red>Shop '{shop_name}' has reached max {limit} listings!"
 invalid-price: "{prefix}<red>Invalid price! Must be a positive number"
 no-item-in-hand: "{prefix}<red>You must hold an item to create a BUY shop!"
 chest-empty-sell: "{prefix}<red>Chest is empty! Add items to the chest before creating a SELL shop."
@@ -77,3 +83,5 @@ territory-no-permission: "{prefix}<red>You don't have permission to create shops
 territory-commercial-required: "{prefix}<red>Shops require a commercial or embassy plot!"
 territory-tax-applied: "{prefix}<gray>Tax paid: <yellow>${amount}</yellow> to {territory}"
 territory-transaction-tax: "{prefix}<gray>Transaction tax: <yellow>${amount}</yellow> ({territory})"
+shop-territory-assigned: "{prefix}<gray>Shop assigned to territory: <white>{territory}"
+shop-territory-mismatch: "{prefix}<red>Must place listings within your shop's territory!"

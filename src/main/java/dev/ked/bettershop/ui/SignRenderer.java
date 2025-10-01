@@ -1,43 +1,48 @@
 package dev.ked.bettershop.ui;
 
 import dev.ked.bettershop.config.ConfigManager;
-import dev.ked.bettershop.shop.Shop;
-import dev.ked.bettershop.shop.ShopManager;
-import dev.ked.bettershop.shop.ShopType;
+import dev.ked.bettershop.integration.MythicItemHandler;
+import dev.ked.bettershop.shop.*;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
-import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.WallSign;
+import org.bukkit.inventory.ItemStack;
+
+import java.util.Optional;
 
 /**
- * Handles creation and updating of shop signs.
+ * Handles creation and updating of listing signs.
  */
 public class SignRenderer {
     private final ConfigManager config;
-    private final ShopManager shopManager;
+    private final ShopRegistry registry;
     private final MiniMessage miniMessage;
+    private MythicItemHandler mythicItemHandler;
 
     private static final BlockFace[] SIGN_FACES = {
             BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST
     };
 
-    public SignRenderer(ConfigManager config, ShopManager shopManager) {
+    public SignRenderer(ConfigManager config, ShopRegistry registry) {
         this.config = config;
-        this.shopManager = shopManager;
+        this.registry = registry;
         this.miniMessage = MiniMessage.miniMessage();
     }
 
+    public void setMythicItemHandler(MythicItemHandler mythicItemHandler) {
+        this.mythicItemHandler = mythicItemHandler;
+    }
+
     /**
-     * Create or update a sign for a shop.
+     * Create or update a sign for a listing.
      */
-    public boolean createOrUpdateSign(Shop shop) {
-        Location signLocation = findSignLocation(shop.getLocation());
+    public boolean createOrUpdateSign(Listing listing) {
+        Location signLocation = findSignLocation(listing.getLocation());
         if (signLocation == null) {
             return false;
         }
@@ -48,101 +53,136 @@ public class SignRenderer {
         if (signBlock.getState() instanceof Sign) {
             sign = (Sign) signBlock.getState();
         } else {
-            // Place a new wall sign
-            BlockFace face = getAttachmentFace(shop.getLocation(), signLocation);
-            if (face == null) {
+            // Place new sign
+            signBlock.setType(Material.OAK_WALL_SIGN);
+            if (!(signBlock.getState() instanceof Sign)) {
                 return false;
             }
-
-            signBlock.setType(Material.OAK_WALL_SIGN);
-            BlockData blockData = signBlock.getBlockData();
-            if (blockData instanceof WallSign wallSign) {
-                wallSign.setFacing(face.getOppositeFace());
-                signBlock.setBlockData(wallSign);
-            }
-
             sign = (Sign) signBlock.getState();
+
+            // Set facing direction
+            if (sign.getBlockData() instanceof WallSign wallSign) {
+                BlockFace facing = getSignFacing(listing.getLocation(), signLocation);
+                wallSign.setFacing(facing);
+                sign.setBlockData(wallSign);
+            }
         }
 
-        updateSignText(sign, shop);
+        // Update sign text
+        updateSignText(sign, listing);
+        sign.update();
         return true;
     }
 
     /**
-     * Update the text on an existing sign.
+     * Remove a sign for a listing.
      */
-    public void updateSignText(Sign sign, Shop shop) {
-        String color = shop.getType() == ShopType.BUY ? config.getBuyColor() : config.getSellColor();
-        String typeText = shop.getType().name();
-        int stock = shopManager.getStock(shop);
-        String itemName = getItemDisplayName(shop);
-
-        // Line 1: [BUY] or [SELL] with color
-        Component line1 = miniMessage.deserialize(color + "[" + typeText + "]");
-
-        // Line 2: Item name (truncated if needed)
-        Component line2 = Component.text(truncate(itemName, 15));
-
-        // Line 3: Price
-        Component line3 = miniMessage.deserialize("<yellow>$" + formatPrice(shop.getPrice()));
-
-        // Line 4: Stock (for SELL shops) or Buy limit (for BUY shops)
-        Component line4;
-        if (shop.getType() == ShopType.SELL) {
-            int reservedStock = shop.getTotalReservedStock();
-            if (reservedStock > 0) {
-                // Show "Stock: X (Y transit)"
-                line4 = miniMessage.deserialize("<gray>Stock: <white>" + stock + " <gray>(<yellow>" + reservedStock + " transit<gray>)");
-            } else {
-                line4 = miniMessage.deserialize("<gray>Stock: <white>" + stock);
+    public void removeSign(Listing listing) {
+        Location signLocation = findSignLocation(listing.getLocation());
+        if (signLocation != null) {
+            Block signBlock = signLocation.getBlock();
+            if (signBlock.getState() instanceof Sign) {
+                signBlock.setType(Material.AIR);
             }
+        }
+    }
+
+    /**
+     * Update the text on a sign.
+     */
+    private void updateSignText(Sign sign, Listing listing) {
+        // Get shop name
+        String shopName = "Unknown";
+        Optional<ShopEntity> shopOpt = registry.getShopById(listing.getShopId());
+        if (shopOpt.isPresent()) {
+            shopName = shopOpt.get().getName();
+        }
+
+        // Get type color
+        String typeColor = listing.getType() == ListingType.SELL ? config.getSellColor() : config.getBuyColor();
+
+        // Line 1: [SELL] or [BUY]
+        sign.line(0, miniMessage.deserialize(typeColor + "[" + listing.getType().name() + "]"));
+
+        // Line 2: Shop name (truncated if needed)
+        String truncatedName = shopName.length() > 15 ? shopName.substring(0, 12) + "..." : shopName;
+        sign.line(1, Component.text(truncatedName));
+
+        // Line 3: Item name and price
+        String itemName = getItemDisplayName(listing);
+        if (itemName != null) {
+            String truncatedItem = itemName.length() > 10 ? itemName.substring(0, 9) + "." : itemName;
+            sign.line(2, miniMessage.deserialize("<white>" + truncatedItem + " <gold>$" + String.format("%.0f", listing.getPrice())));
         } else {
-            // BUY shop
-            int buyLimit = shop.getBuyLimit();
-            if (buyLimit == 0) {
-                line4 = miniMessage.deserialize("<gray>Buying");
-            } else {
-                int remaining = shop.getRemainingBuyLimit(stock);
-                if (remaining == 0) {
-                    line4 = miniMessage.deserialize("<red>Full");
-                } else {
-                    line4 = miniMessage.deserialize("<gray>Buying <white>" + remaining);
+            sign.line(2, Component.text("No Item"));
+        }
+
+        // Line 4: Stock (dynamically calculated)
+        int stock = getStock(listing);
+        sign.line(3, miniMessage.deserialize("<gray>Stock: <white>" + stock));
+    }
+
+    /**
+     * Get display name for an item (handles both vanilla and mythic items).
+     */
+    private String getItemDisplayName(Listing listing) {
+        if (listing.isMythicItem() && mythicItemHandler != null) {
+            ItemStack mythicItem = mythicItemHandler.getMythicItem(listing.getMythicItemId(), 1);
+            if (mythicItem != null && mythicItem.getItemMeta().hasDisplayName()) {
+                // Remove formatting codes for sign display
+                Component displayName = mythicItem.getItemMeta().displayName();
+                if (displayName != null) {
+                    return miniMessage.stripTags(miniMessage.serialize(displayName));
+                }
+            }
+            return listing.getMythicItemId();
+        } else if (listing.getItem() != null) {
+            return listing.getItem().getType().name().toLowerCase().replace('_', ' ');
+        }
+        return null;
+    }
+
+    /**
+     * Get stock for a listing.
+     */
+    private int getStock(Listing listing) {
+        Block block = listing.getLocation().getBlock();
+        if (!(block.getState() instanceof org.bukkit.block.Chest chest)) {
+            return 0;
+        }
+
+        int count = 0;
+
+        // Handle mythic items
+        if (listing.isMythicItem() && mythicItemHandler != null) {
+            for (ItemStack item : chest.getInventory().getContents()) {
+                if (item != null && mythicItemHandler.isMythicItem(item, listing.getMythicItemId())) {
+                    count += item.getAmount();
+                }
+            }
+        } else if (listing.getItem() != null) {
+            // Handle vanilla items
+            for (ItemStack item : chest.getInventory().getContents()) {
+                if (item != null && item.isSimilar(listing.getItem())) {
+                    count += item.getAmount();
                 }
             }
         }
 
-        sign.line(0, line1);
-        sign.line(1, line2);
-        sign.line(2, line3);
-        sign.line(3, line4);
-
-        sign.update();
+        return count;
     }
 
     /**
-     * Remove a sign associated with a shop.
+     * Find a suitable location for a sign adjacent to the chest.
      */
-    public void removeSign(Shop shop) {
-        Location signLocation = findExistingSign(shop.getLocation());
-        if (signLocation != null) {
-            signLocation.getBlock().setType(Material.AIR);
-        }
-    }
+    private Location findSignLocation(Location chestLocation) {
+        Block chestBlock = chestLocation.getBlock();
 
-    /**
-     * Find a suitable location for a sign near the chest.
-     */
-    private Location findSignLocation(Location chestLoc) {
-        // First check if a sign already exists
-        Location existing = findExistingSign(chestLoc);
-        if (existing != null) {
-            return existing;
-        }
-
-        // Try to find an empty block face
         for (BlockFace face : SIGN_FACES) {
-            Block adjacent = chestLoc.getBlock().getRelative(face);
-            if (adjacent.getType() == Material.AIR) {
+            Block adjacent = chestBlock.getRelative(face);
+
+            // Check if block is air or already a sign
+            if (adjacent.getType() == Material.AIR || adjacent.getState() instanceof Sign) {
                 return adjacent.getLocation();
             }
         }
@@ -151,62 +191,17 @@ public class SignRenderer {
     }
 
     /**
-     * Find an existing sign attached to or near the chest.
+     * Get the facing direction for a wall sign.
      */
-    private Location findExistingSign(Location chestLoc) {
-        for (BlockFace face : SIGN_FACES) {
-            Block adjacent = chestLoc.getBlock().getRelative(face);
-            if (adjacent.getState() instanceof Sign) {
-                return adjacent.getLocation();
-            }
-        }
-        return null;
-    }
+    private BlockFace getSignFacing(Location chestLocation, Location signLocation) {
+        int dx = signLocation.getBlockX() - chestLocation.getBlockX();
+        int dz = signLocation.getBlockZ() - chestLocation.getBlockZ();
 
-    /**
-     * Get the face that the sign should attach to.
-     */
-    private BlockFace getAttachmentFace(Location chest, Location sign) {
-        int dx = sign.getBlockX() - chest.getBlockX();
-        int dz = sign.getBlockZ() - chest.getBlockZ();
+        if (dx > 0) return BlockFace.WEST;
+        if (dx < 0) return BlockFace.EAST;
+        if (dz > 0) return BlockFace.NORTH;
+        if (dz < 0) return BlockFace.SOUTH;
 
-        if (dx == 1) return BlockFace.WEST;
-        if (dx == -1) return BlockFace.EAST;
-        if (dz == 1) return BlockFace.NORTH;
-        if (dz == -1) return BlockFace.SOUTH;
-
-        return null;
-    }
-
-    /**
-     * Get a display name for the item.
-     */
-    private String getItemDisplayName(Shop shop) {
-        if (shop.getItem() == null) {
-            return "Empty Shop";
-        }
-        Component itemName = shop.getItem().displayName();
-        return MiniMessage.miniMessage().stripTags(MiniMessage.miniMessage().serialize(itemName));
-    }
-
-    /**
-     * Format price for display.
-     */
-    private String formatPrice(double price) {
-        if (price == (long) price) {
-            return String.format("%d", (long) price);
-        } else {
-            return String.format("%.2f", price);
-        }
-    }
-
-    /**
-     * Truncate string to max length.
-     */
-    private String truncate(String str, int maxLength) {
-        if (str.length() <= maxLength) {
-            return str;
-        }
-        return str.substring(0, maxLength - 1) + "…";
+        return BlockFace.NORTH;
     }
 }

@@ -1,43 +1,50 @@
 package dev.ked.bettershop;
 
-import dev.ked.bettershop.api.BetterShopAPI;
 import dev.ked.bettershop.commands.ShopCommand;
 import dev.ked.bettershop.config.ConfigManager;
+import dev.ked.bettershop.integration.MythicItemHandler;
 import dev.ked.bettershop.integration.TerritoryManager;
 import dev.ked.bettershop.integration.TownyTerritoryManager;
 import dev.ked.bettershop.integration.TownsAndNationsTerritoryManager;
-import dev.ked.bettershop.listeners.ShopInteractListener;
-import dev.ked.bettershop.listeners.ShopProtectionListener;
-import dev.ked.bettershop.shop.ShopManager;
+import dev.ked.bettershop.listeners.GUIListener;
+import dev.ked.bettershop.listeners.ShopModeListener;
+import dev.ked.bettershop.map.MapManager;
+import dev.ked.bettershop.mode.ShopModeManager;
+import dev.ked.bettershop.shop.ShopEntityManager;
 import dev.ked.bettershop.shop.ShopRegistry;
-import dev.ked.bettershop.storage.ShopDataManager;
-import dev.ked.bettershop.ui.HologramManager;
-import dev.ked.bettershop.ui.MaterialSelectorGUI;
-import dev.ked.bettershop.ui.SignRenderer;
-import dev.ked.bettershop.ui.TradeGUI;
+import dev.ked.bettershop.ui.*;
 import net.milkbowl.vault.economy.Economy;
-import org.bukkit.Bukkit;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitTask;
 
 /**
  * Main plugin class for BetterShop.
  */
 public class BetterShopPlugin extends JavaPlugin {
+    // Core managers
     private ConfigManager configManager;
     private ShopRegistry shopRegistry;
-    private ShopManager shopManager;
-    private ShopDataManager dataManager;
+    private ShopEntityManager shopEntityManager;
+    private ShopModeManager shopModeManager;
+
+    // UI components
     private SignRenderer signRenderer;
     private HologramManager hologramManager;
-    private MaterialSelectorGUI materialSelector;
-    private TradeGUI tradeGUI;
-    private TerritoryManager territoryManager;
-    private Economy economy;
-    private BetterShopAPI betterShopAPI;
+    private ListingConfigGUI listingConfigGUI;
+    private BuyListingConfigGUI buyListingConfigGUI;
 
-    private BukkitTask autoSaveTask;
+    // Map integration
+    private MapManager mapManager;
+    private GUIListener guiListener;
+
+    // Territory integration
+    private TerritoryManager territoryManager;
+
+    // MythicMobs integration
+    private MythicItemHandler mythicItemHandler;
+
+    // Economy
+    private Economy economy;
 
     @Override
     public void onEnable() {
@@ -48,67 +55,66 @@ public class BetterShopPlugin extends JavaPlugin {
             return;
         }
 
-        // Initialize managers
+        // Initialize configuration
         configManager = new ConfigManager(this);
         configManager.reload();
 
         // Set up territory integration
         territoryManager = setupTerritoryIntegration();
 
+        // Set up MythicMobs integration
+        mythicItemHandler = new MythicItemHandler(this);
+
+        // Initialize registry and managers
         shopRegistry = new ShopRegistry();
-        shopManager = new ShopManager(shopRegistry, economy);
-        shopManager.setTerritoryManager(territoryManager);
+        shopEntityManager = new ShopEntityManager(shopRegistry, configManager);
+        shopEntityManager.setTerritoryManager(territoryManager);
 
-        dataManager = new ShopDataManager(getDataFolder().toPath(), getLogger());
+        // Initialize shop mode
+        shopModeManager = new ShopModeManager(this, configManager, shopRegistry);
 
-        signRenderer = new SignRenderer(configManager, shopManager);
-        hologramManager = new HologramManager(configManager, shopManager, shopRegistry);
-        materialSelector = new MaterialSelectorGUI();
-        tradeGUI = new TradeGUI(configManager, shopManager, economy);
+        // Initialize UI components
+        signRenderer = new SignRenderer(configManager, shopRegistry);
+        signRenderer.setMythicItemHandler(mythicItemHandler);
 
-        // Initialize API for external plugins (like SilkRoad)
-        betterShopAPI = new BetterShopAPI(shopRegistry, shopManager, this);
+        hologramManager = new HologramManager(configManager, shopRegistry);
+        hologramManager.setMythicItemHandler(mythicItemHandler);
 
-        // Load shops from disk
-        dataManager.loadShops(shopRegistry);
+        listingConfigGUI = new ListingConfigGUI(this, configManager, shopRegistry, shopEntityManager, hologramManager, signRenderer);
+        buyListingConfigGUI = new BuyListingConfigGUI(this, configManager, shopRegistry, shopEntityManager, hologramManager, signRenderer, mythicItemHandler);
 
-        // Recreate holograms and signs for loaded shops
-        for (var shop : shopRegistry.getAllShops()) {
-            signRenderer.createOrUpdateSign(shop);
-            hologramManager.createHologram(shop);
-        }
-
-        // Register commands
-        ShopCommand shopCommand = new ShopCommand(this, shopManager, shopRegistry, configManager,
-                signRenderer, hologramManager, materialSelector, economy);
-        getCommand("shop").setExecutor(shopCommand);
-        getCommand("shop").setTabCompleter(shopCommand);
+        // Initialize map integration
+        mapManager = new MapManager(this, shopRegistry);
+        mapManager.initializeIntegrations();
 
         // Register listeners
-        getServer().getPluginManager().registerEvents(shopCommand, this);
-        getServer().getPluginManager().registerEvents(materialSelector, this);
-        getServer().getPluginManager().registerEvents(new ShopInteractListener(shopManager, configManager, tradeGUI, economy), this);
-        getServer().getPluginManager().registerEvents(new ShopProtectionListener(shopManager, shopRegistry, configManager, signRenderer, hologramManager), this);
-        getServer().getPluginManager().registerEvents(tradeGUI, this);
+        registerListeners();
 
-        // Start auto-save task (every 5 minutes)
-        autoSaveTask = Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
-            dataManager.saveShops(shopRegistry);
-        }, 6000L, 6000L); // 5 minutes in ticks
+        // Register commands
+        registerCommands();
 
-        getLogger().info("BetterShop has been enabled with " + shopRegistry.getAllShops().size() + " shops!");
+        // Start shop mode check task
+        shopModeManager.startCheckTask();
+
+        getLogger().info("BetterShop v" + getDescription().getVersion() + " enabled!");
     }
 
     @Override
     public void onDisable() {
-        // Cancel auto-save task
-        if (autoSaveTask != null) {
-            autoSaveTask.cancel();
+        // Stop shop mode check task
+        if (shopModeManager != null) {
+            shopModeManager.stopCheckTask();
+            shopModeManager.exitAllSessions();
         }
 
-        // Save all shops
-        if (dataManager != null && shopRegistry != null) {
-            dataManager.saveShops(shopRegistry);
+        // Clean up GUIs
+        if (listingConfigGUI != null) {
+            listingConfigGUI.cleanup();
+            listingConfigGUI.unregister();
+        }
+        if (buyListingConfigGUI != null) {
+            buyListingConfigGUI.cleanup();
+            buyListingConfigGUI.unregister();
         }
 
         // Remove all holograms
@@ -116,11 +122,41 @@ public class BetterShopPlugin extends JavaPlugin {
             hologramManager.removeAllHolograms();
         }
 
-        getLogger().info("BetterShop has been disabled!");
+        // Clear map markers
+        if (mapManager != null) {
+            mapManager.clearAllMarkers();
+        }
+
+        getLogger().info("BetterShop disabled!");
     }
 
     /**
-     * Set up Vault economy.
+     * Register event listeners.
+     */
+    private void registerListeners() {
+        ShopModeListener shopModeListener = new ShopModeListener(this, shopModeManager, shopEntityManager, configManager);
+        getServer().getPluginManager().registerEvents(shopModeListener, this);
+
+        // Register GUI listener for shop directory
+        guiListener = new GUIListener(this);
+        getServer().getPluginManager().registerEvents(guiListener, this);
+
+        // Register GUI listeners
+        listingConfigGUI.register();
+        buyListingConfigGUI.register();
+    }
+
+    /**
+     * Register commands.
+     */
+    private void registerCommands() {
+        ShopCommand shopCommand = new ShopCommand(this, shopEntityManager, shopRegistry, shopModeManager, configManager);
+        getCommand("shop").setExecutor(shopCommand);
+        getCommand("shop").setTabCompleter(shopCommand);
+    }
+
+    /**
+     * Set up economy integration with Vault.
      */
     private boolean setupEconomy() {
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
@@ -137,38 +173,37 @@ public class BetterShopPlugin extends JavaPlugin {
     }
 
     /**
-     * Set up territory plugin integration (Towny/Towns and Nations).
+     * Set up territory integration (Towny or Towns and Nations).
      */
     private TerritoryManager setupTerritoryIntegration() {
-        // Check for Towny
+        // Try Towny first
         if (configManager.isTownyEnabled() && getServer().getPluginManager().getPlugin("Towny") != null) {
-            getLogger().info("Towny detected! Enabling Towny integration.");
+            getLogger().info("Towny integration enabled!");
             return new TownyTerritoryManager(configManager);
         }
 
-        // Check for Towns and Nations
+        // Try Towns and Nations
         if (configManager.isTownsAndNationsEnabled() && getServer().getPluginManager().getPlugin("TownsAndNations") != null) {
-            getLogger().info("Towns and Nations detected! Enabling TaN integration.");
+            getLogger().info("Towns and Nations integration enabled!");
             return new TownsAndNationsTerritoryManager(configManager, economy);
         }
 
-        getLogger().info("No territory plugin integration enabled.");
+        getLogger().info("No territory plugin found. Territory features disabled.");
         return null;
     }
 
     /**
-     * Reload configuration and update all shops.
+     * Reload configuration.
      */
     public void reloadConfiguration() {
         configManager.reload();
-
-        // Update all shop visuals
-        for (var shop : shopRegistry.getAllShops()) {
-            signRenderer.createOrUpdateSign(shop);
-            hologramManager.updateHologram(shop);
-        }
-
         getLogger().info("Configuration reloaded!");
+    }
+
+    // ===== GETTERS FOR DEPENDENCIES =====
+
+    public Economy getEconomy() {
+        return economy;
     }
 
     public ConfigManager getConfigManager() {
@@ -179,24 +214,43 @@ public class BetterShopPlugin extends JavaPlugin {
         return shopRegistry;
     }
 
-    public ShopManager getShopManager() {
-        return shopManager;
+    public ShopEntityManager getShopEntityManager() {
+        return shopEntityManager;
     }
 
-    public Economy getEconomy() {
-        return economy;
+    public ShopModeManager getShopModeManager() {
+        return shopModeManager;
+    }
+
+    public SignRenderer getSignRenderer() {
+        return signRenderer;
+    }
+
+    public MapManager getMapManager() {
+        return mapManager;
+    }
+
+    public GUIListener getGUIListener() {
+        return guiListener;
+    }
+
+    public HologramManager getHologramManager() {
+        return hologramManager;
+    }
+
+    public ListingConfigGUI getListingConfigGUI() {
+        return listingConfigGUI;
+    }
+
+    public BuyListingConfigGUI getBuyListingConfigGUI() {
+        return buyListingConfigGUI;
     }
 
     public TerritoryManager getTerritoryManager() {
         return territoryManager;
     }
 
-    /**
-     * Get the BetterShop API for external plugins.
-     * Used by plugins like SilkRoad for shop integration.
-     * @return BetterShopAPI instance
-     */
-    public BetterShopAPI getBetterShopAPI() {
-        return betterShopAPI;
+    public MythicItemHandler getMythicItemHandler() {
+        return mythicItemHandler;
     }
 }

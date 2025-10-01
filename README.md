@@ -2,9 +2,22 @@
 
 An intuitive player-to-player shop system for Minecraft Paper 1.21.3+ with GUI trading, holograms, and sign displays.
 
+## ⚡ MythicMobs Integration
+
+BetterShop supports **[MythicMobs](https://mythiccraft.io/index.php)** - sell and buy custom mythic items like boss drops and event rewards!
+
+**Features:**
+- Browse and select from all available MythicMobs items
+- Create BUY shops for mythic boss drops (Storm Titan Core, Tempest Shard, etc.)
+- Signs and holograms display mythic item names
+- Stock tracking works with mythic items
+- No compile-time dependency - gracefully handles MythicMobs not being installed
+
+**Usage:** When creating a BUY shop without an item in hand, the material selector will show a **"✦ Mythic Items ✦"** category (Nether Star icon) if MythicMobs is installed.
+
 ## 🛤️ Silk Road Integration
 
-BetterShop now supports **[Silk Road](https://github.com/KyleEdwardDonaldson/SilkRoad)** - a cross-regional trading system with player-driven delivery contracts!
+BetterShop supports **[Silk Road](https://github.com/KyleEdwardDonaldson/SilkRoad)** - a cross-regional trading system with player-driven delivery contracts!
 
 **Enable Silk Road on your shops to:**
 - Allow remote purchases from other regions
@@ -33,8 +46,8 @@ See the [Silk Road Plugin](https://github.com/KyleEdwardDonaldson/SilkRoad) for 
 
 - **Material Selector:**
   - Create BUY shops for items you don't own yet
-  - Browse 9 categories of materials
-  - Over 100 items to choose from
+  - Browse 9 categories of materials + MythicMobs items
+  - Over 100 vanilla items plus all your custom MythicMobs items
 
 - **Territory Integration:** *(Optional)*
   - **Towny** support - Wilderness toggle, commercial plots, build permissions
@@ -50,6 +63,7 @@ See the [Silk Road Plugin](https://github.com/KyleEdwardDonaldson/SilkRoad) for 
    - Vault (required)
    - An economy plugin (EssentialsX, etc.)
    - *Optional:* Towny or Towns and Nations for territory integration
+   - *Optional:* MythicMobs for custom item support
 
 2. **Build from Source:**
    ```bash
@@ -63,9 +77,9 @@ See the [Silk Road Plugin](https://github.com/KyleEdwardDonaldson/SilkRoad) for 
    - Place `target/bettershop-0.1.0.jar` in `plugins/` folder
    - Restart server
 
-3. **Optional - Territory Integration:**
-   - Install either Towny or Towns and Nations plugin on your server
-   - Enable in `config.yml` (see Territory Integration section below)
+3. **Optional Integrations:**
+   - **Territory Integration:** Install either Towny or Towns and Nations plugin and enable in `config.yml`
+   - **MythicMobs:** Install MythicMobs plugin - BetterShop will automatically detect it and enable mythic item support
 
 ## Usage
 
@@ -92,11 +106,11 @@ Players will buy from your stock, and you earn money (collected via `/shop colle
 
 **Option 2: Without Item (Material Selector)**
 1. Run: `/shop create buy 10` (no item in hand)
-2. Select category in GUI (Building, Resources, Food, etc.)
-3. Select specific material
+2. Select category in GUI (Building, Resources, Food, **Mythic Items**, etc.)
+3. Select specific material or mythic item
 4. Place a new chest OR right-click an existing empty chest
 
-Perfect for buying items you don't have yet! When players sell to your shop:
+Perfect for buying items you don't have yet - including MythicMobs boss drops! When players sell to your shop:
 - Items go into the chest (only you can access it)
 - Money is deducted from your Vault balance automatically
 - You can retrieve items by opening the chest
@@ -296,6 +310,14 @@ See the **Territory Integration** section above for detailed Towny and Towns and
 4. Players sell wheat → items appear in chest
 5. Make sure you have money in your Vault balance!
 6. Open chest to retrieve purchased wheat
+
+**Buying MythicMobs Boss Drops (BUY shop):**
+1. Run `/shop create buy 50000` (pay $50,000 each)
+2. Select "✦ Mythic Items ✦" → "Storm Titan Core" in GUI
+3. Place a new chest
+4. Players sell their boss drops → mythic items appear in chest
+5. Make sure you have enough money in your Vault balance!
+6. Open chest to retrieve purchased mythic items
 
 **Money Flow:**
 - **SELL shops:** Customer pays $ → You collect earnings

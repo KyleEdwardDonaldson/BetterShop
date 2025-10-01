@@ -1,10 +1,12 @@
 package dev.ked.bettershop.ui;
 
+import dev.ked.bettershop.integration.MythicItemHandler;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -22,6 +24,7 @@ import java.util.function.Consumer;
  */
 public class MaterialSelectorGUI implements Listener {
     private final Map<Inventory, MaterialSelectorData> openGUIs = new HashMap<>();
+    private final MythicItemHandler mythicItemHandler;
 
     // Material categories
     private static final Map<String, List<Material>> CATEGORIES = new LinkedHashMap<>();
@@ -116,11 +119,15 @@ public class MaterialSelectorGUI implements Listener {
         ));
     }
 
+    public MaterialSelectorGUI(MythicItemHandler mythicItemHandler) {
+        this.mythicItemHandler = mythicItemHandler;
+    }
+
     /**
      * Open the category selection GUI.
      */
-    public void openCategorySelector(Player player, Consumer<Material> onSelect) {
-        Inventory inv = Bukkit.createInventory(null, 27, Component.text("Select Item Category"));
+    public void openCategorySelector(Player player, Consumer<Material> onSelect, Consumer<String> onMythicSelect) {
+        Inventory inv = Bukkit.createInventory(null, 36, Component.text("Select Item Category"));
 
         int slot = 10;
         for (String category : CATEGORIES.keySet()) {
@@ -130,22 +137,28 @@ public class MaterialSelectorGUI implements Listener {
             if (slot == 17) slot = 19; // Skip to next row
         }
 
+        // Add Mythic Items category if enabled
+        if (mythicItemHandler != null && mythicItemHandler.isEnabled()) {
+            ItemStack mythicCategory = createMythicCategoryItem();
+            inv.setItem(16, mythicCategory);
+        }
+
         // Add glass panes for decoration
         ItemStack grayPane = createGlassPane(Material.GRAY_STAINED_GLASS_PANE);
-        for (int i = 0; i < 27; i++) {
+        for (int i = 0; i < 36; i++) {
             if (inv.getItem(i) == null) {
                 inv.setItem(i, grayPane);
             }
         }
 
-        openGUIs.put(inv, new MaterialSelectorData(null, onSelect));
+        openGUIs.put(inv, new MaterialSelectorData(null, onSelect, onMythicSelect));
         player.openInventory(inv);
     }
 
     /**
      * Open the material selection GUI for a specific category.
      */
-    public void openMaterialSelector(Player player, String category, Consumer<Material> onSelect) {
+    public void openMaterialSelector(Player player, String category, Consumer<Material> onSelect, Consumer<String> onMythicSelect) {
         List<Material> materials = CATEGORIES.get(category);
         if (materials == null) {
             return;
@@ -168,7 +181,50 @@ public class MaterialSelectorGUI implements Listener {
         backButton.setItemMeta(meta);
         inv.setItem(size - 5, backButton);
 
-        openGUIs.put(inv, new MaterialSelectorData(category, onSelect));
+        openGUIs.put(inv, new MaterialSelectorData(category, onSelect, onMythicSelect));
+        player.openInventory(inv);
+    }
+
+    /**
+     * Open the mythic items selection GUI.
+     */
+    public void openMythicItemSelector(Player player, Consumer<String> onMythicSelect, Consumer<Material> onVanillaSelect) {
+        if (mythicItemHandler == null || !mythicItemHandler.isEnabled()) {
+            return;
+        }
+
+        List<String> mythicItemIds = mythicItemHandler.getAllMythicItemIds();
+
+        int size = ((mythicItemIds.size() + 8) / 9) * 9;
+        size = Math.min(54, Math.max(27, size));
+
+        Inventory inv = Bukkit.createInventory(null, size, Component.text("Select Mythic Item", NamedTextColor.DARK_PURPLE));
+
+        for (int i = 0; i < mythicItemIds.size() && i < size - 9; i++) {
+            String mythicId = mythicItemIds.get(i);
+            ItemStack mythicItem = mythicItemHandler.getMythicItem(mythicId, 1);
+
+            if (mythicItem != null) {
+                // Add lore to indicate this is a mythic item
+                ItemMeta meta = mythicItem.getItemMeta();
+                List<Component> lore = new ArrayList<>(meta.lore() != null ? meta.lore() : List.of());
+                lore.add(Component.empty());
+                lore.add(Component.text("Click to select", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+                meta.lore(lore);
+                mythicItem.setItemMeta(meta);
+
+                inv.setItem(i, mythicItem);
+            }
+        }
+
+        // Back button
+        ItemStack backButton = new ItemStack(Material.ARROW);
+        ItemMeta meta = backButton.getItemMeta();
+        meta.displayName(Component.text("← Back", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+        backButton.setItemMeta(meta);
+        inv.setItem(size - 5, backButton);
+
+        openGUIs.put(inv, new MaterialSelectorData("Mythic Items", onVanillaSelect, onMythicSelect));
         player.openInventory(inv);
     }
 
@@ -195,16 +251,34 @@ public class MaterialSelectorGUI implements Listener {
         // Check if back button
         if (clicked.getType() == Material.ARROW) {
             player.closeInventory();
-            openCategorySelector(player, data.onSelect);
+            openCategorySelector(player, data.onSelect, data.onMythicSelect);
             return;
         }
 
         // If in category view, open material selector
         if (data.category == null) {
+            // Check if mythic category was clicked
+            if (clicked.getType() == Material.NETHER_STAR) {
+                player.closeInventory();
+                openMythicItemSelector(player, data.onMythicSelect, data.onSelect);
+                return;
+            }
+
             String categoryName = getCategoryFromItem(clicked);
             if (categoryName != null) {
                 player.closeInventory();
-                openMaterialSelector(player, categoryName, data.onSelect);
+                openMaterialSelector(player, categoryName, data.onSelect, data.onMythicSelect);
+            }
+            return;
+        }
+
+        // Check if in mythic items view
+        if ("Mythic Items".equals(data.category)) {
+            // Get mythic ID from the item
+            String mythicId = mythicItemHandler.getMythicId(clicked);
+            if (mythicId != null) {
+                player.closeInventory();
+                data.onMythicSelect.accept(mythicId);
             }
             return;
         }
@@ -242,6 +316,27 @@ public class MaterialSelectorGUI implements Listener {
         meta.lore(List.of(
                 Component.text(materials.size() + " items", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)
         ));
+
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private ItemStack createMythicCategoryItem() {
+        ItemStack item = new ItemStack(Material.NETHER_STAR);
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(Component.text("✦ Mythic Items ✦", NamedTextColor.DARK_PURPLE, TextDecoration.BOLD)
+                .decoration(TextDecoration.ITALIC, false));
+
+        List<String> mythicItems = mythicItemHandler.getAllMythicItemIds();
+        meta.lore(Arrays.asList(
+                Component.text("Rare drops from mythic bosses", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                Component.text("Storm-infused gear and materials", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                Component.empty(),
+                Component.text(mythicItems.size() + " items", NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false)
+        ));
+
+        meta.addEnchant(Enchantment.UNBREAKING, 1, true);
+        meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ENCHANTS);
 
         item.setItemMeta(meta);
         return item;
@@ -291,10 +386,12 @@ public class MaterialSelectorGUI implements Listener {
     private static class MaterialSelectorData {
         final String category; // null if in category view
         final Consumer<Material> onSelect;
+        final Consumer<String> onMythicSelect;
 
-        MaterialSelectorData(String category, Consumer<Material> onSelect) {
+        MaterialSelectorData(String category, Consumer<Material> onSelect, Consumer<String> onMythicSelect) {
             this.category = category;
             this.onSelect = onSelect;
+            this.onMythicSelect = onMythicSelect;
         }
     }
 }
