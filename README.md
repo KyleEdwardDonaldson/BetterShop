@@ -2,6 +2,18 @@
 
 An intuitive player-to-player shop system for Minecraft Paper 1.21.3+ with GUI trading, holograms, and sign displays.
 
+## 🛤️ Silk Road Integration
+
+BetterShop now supports **[Silk Road](https://github.com/KyleEdwardDonaldson/SilkRoad)** - a cross-regional trading system with player-driven delivery contracts!
+
+**Enable Silk Road on your shops to:**
+- Allow remote purchases from other regions
+- Create delivery contracts automatically
+- Track in-transit stock on signs and holograms
+- Earn from cross-regional trade
+
+See the [Silk Road Plugin](https://github.com/KyleEdwardDonaldson/SilkRoad) for more information.
+
 ## Features
 
 - **Two Shop Types:**
@@ -107,6 +119,18 @@ Perfect for buying items you don't have yet! When players sell to your shop:
 - `/shop list` - List all your shops
 - `/shop remove` - Remove a shop (look at shop)
 
+### Silk Road Commands (requires Silk Road plugin)
+
+- `/shop silkroad enable` - Enable cross-regional trading for shop
+- `/shop silkroad disable` - Disable cross-regional trading for shop
+- `/shop silkroad enable all` - Enable for all your shops
+- `/shop silkroad disable all` - Disable for all your shops
+
+When enabled, your shop will:
+- Appear in Silk Road trade post browsers across all regions
+- Show "X in transit" stock on signs/holograms for reserved items
+- Automatically create delivery contracts when remote buyers purchase
+
 ### Restocking
 
 Simply open the shop chest and add/remove items. Signs and holograms update automatically!
@@ -202,6 +226,10 @@ townsandnations:
 | `/shop info` | View shop details | `bettershop.info` |
 | `/shop collect` | Collect earnings | Default |
 | `/shop list` | List your shops | `bettershop.list` |
+| `/shop silkroad enable` | Enable Silk Road for shop | `bettershop.silkroad` |
+| `/shop silkroad disable` | Disable Silk Road for shop | `bettershop.silkroad` |
+| `/shop silkroad enable all` | Enable for all shops | `bettershop.silkroad` |
+| `/shop silkroad disable all` | Disable for all shops | `bettershop.silkroad` |
 | `/shop reload` | Reload config | `bettershop.admin.reload` |
 
 ## Configuration
@@ -248,6 +276,7 @@ See the **Territory Integration** section above for detailed Towny and Towns and
 - `bettershop.remove` - Remove own shops (default: true)
 - `bettershop.info` - View shop info (default: true)
 - `bettershop.list` - List own shops (default: true)
+- `bettershop.silkroad` - Enable/disable Silk Road integration (default: true)
 - `bettershop.admin` - All admin permissions (default: op)
 - `bettershop.admin.reload` - Reload config (default: op)
 
