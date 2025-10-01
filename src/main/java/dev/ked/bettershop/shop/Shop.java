@@ -3,6 +3,8 @@ package dev.ked.bettershop.shop;
 import org.bukkit.Location;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class Shop {
@@ -14,6 +16,8 @@ public class Shop {
     private double earnings;
     private int buyLimit; // For BUY shops: how many items owner wants to buy (0 = unlimited)
     private final long createdAt;
+    private boolean silkRoadEnabled = false;
+    private Map<UUID, Integer> reservedStock = new HashMap<>(); // UUID = contractId
 
     public Shop(Location location, UUID owner, ShopType type, ItemStack item, double price) {
         this.location = location;
@@ -29,6 +33,7 @@ public class Shop {
         this.earnings = 0.0;
         this.buyLimit = 0; // 0 = unlimited
         this.createdAt = System.currentTimeMillis();
+        this.reservedStock = new HashMap<>();
     }
 
     // Constructor with buy limit
@@ -46,6 +51,7 @@ public class Shop {
         this.earnings = 0.0;
         this.buyLimit = buyLimit;
         this.createdAt = System.currentTimeMillis();
+        this.reservedStock = new HashMap<>();
     }
 
     public Location getLocation() {
@@ -129,6 +135,55 @@ public class Shop {
         return 0;
     }
 
+    public boolean isSilkRoadEnabled() {
+        return silkRoadEnabled;
+    }
+
+    public void setSilkRoadEnabled(boolean silkRoadEnabled) {
+        this.silkRoadEnabled = silkRoadEnabled;
+    }
+
+    /**
+     * Reserve stock for a Silk Road contract.
+     * @param contractId The contract UUID
+     * @param quantity The quantity to reserve
+     */
+    public void reserveStock(UUID contractId, int quantity) {
+        reservedStock.put(contractId, quantity);
+    }
+
+    /**
+     * Release a stock reservation.
+     * @param contractId The contract UUID
+     */
+    public void releaseReservation(UUID contractId) {
+        reservedStock.remove(contractId);
+    }
+
+    /**
+     * Get the reserved stock map.
+     * @return Map of contract IDs to reserved quantities
+     */
+    public Map<UUID, Integer> getReservedStock() {
+        return reservedStock;
+    }
+
+    /**
+     * Set the reserved stock map (used for data loading).
+     * @param reservedStock Map of contract IDs to reserved quantities
+     */
+    public void setReservedStock(Map<UUID, Integer> reservedStock) {
+        this.reservedStock = reservedStock != null ? reservedStock : new HashMap<>();
+    }
+
+    /**
+     * Get the total quantity of reserved stock.
+     * @return Total reserved quantity
+     */
+    public int getTotalReservedStock() {
+        return reservedStock.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
     @Override
     public String toString() {
         return "Shop{" +
@@ -138,6 +193,7 @@ public class Shop {
                 ", item=" + (item != null ? item.getType() : "none") +
                 ", price=" + price +
                 ", earnings=" + earnings +
+                ", silkRoadEnabled=" + silkRoadEnabled +
                 '}';
     }
 }

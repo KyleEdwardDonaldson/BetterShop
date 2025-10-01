@@ -108,7 +108,7 @@ public class HologramManager {
 
         TextColor color = shop.getType() == ShopType.BUY ? NamedTextColor.GREEN : NamedTextColor.BLUE;
 
-        // Format for SELL shops: 🛒 Diamond - $10 (5 left)
+        // Format for SELL shops: 🛒 Diamond - $10 (Stock: 5, 2 in transit)
         // Format for BUY shops: 🛒 Diamond - $10 (Buying 45/100) or (Buying) if unlimited
         Component name = Component.text("🛒 ", NamedTextColor.YELLOW)
                 .append(Component.text(itemName, NamedTextColor.WHITE))
@@ -116,7 +116,15 @@ public class HologramManager {
                 .append(Component.text("$" + priceStr, color));
 
         if (shop.getType() == ShopType.SELL) {
-            name = name.append(Component.text(" (" + stock + " left)", NamedTextColor.GRAY));
+            int reservedStock = shop.getTotalReservedStock();
+            if (reservedStock > 0) {
+                // Show "Stock: X, Y in transit"
+                name = name.append(Component.text(" (Stock: " + stock + ", ", NamedTextColor.GRAY))
+                        .append(Component.text(reservedStock + " in transit", NamedTextColor.YELLOW))
+                        .append(Component.text(")", NamedTextColor.GRAY));
+            } else {
+                name = name.append(Component.text(" (" + stock + " left)", NamedTextColor.GRAY));
+            }
         } else {
             // BUY shop
             int buyLimit = shop.getBuyLimit();

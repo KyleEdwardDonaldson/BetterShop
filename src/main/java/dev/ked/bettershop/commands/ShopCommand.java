@@ -80,6 +80,7 @@ public class ShopCommand implements CommandExecutor, TabCompleter, Listener {
             case "collect" -> handleCollect(player);
             case "list" -> handleList(player);
             case "reload" -> handleReload(player);
+            case "silkroad" -> handleSilkRoad(player, args);
             default -> sendHelp(player);
         }
 
@@ -478,6 +479,103 @@ public class ShopCommand implements CommandExecutor, TabCompleter, Listener {
         player.sendMessage(miniMessage.deserialize(config.getMessage("config-reloaded")));
     }
 
+    private void handleSilkRoad(Player player, String[] args) {
+        if (!player.hasPermission("bettershop.silkroad")) {
+            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>No permission!"));
+            return;
+        }
+
+        if (args.length < 2) {
+            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>Usage: /shop silkroad <enable|disable> [all]"));
+            return;
+        }
+
+        String action = args[1].toLowerCase();
+        boolean enable = action.equals("enable");
+        boolean disable = action.equals("disable");
+
+        if (!enable && !disable) {
+            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>Usage: /shop silkroad <enable|disable> [all]"));
+            return;
+        }
+
+        // Check if "all" flag is present
+        boolean all = args.length >= 3 && args[2].equalsIgnoreCase("all");
+
+        if (all) {
+            handleSilkRoadAll(player, enable);
+        } else {
+            handleSilkRoadSingle(player, enable);
+        }
+    }
+
+    private void handleSilkRoadSingle(Player player, boolean enable) {
+        Block target = player.getTargetBlockExact(5);
+        if (target == null) {
+            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>Look at a shop to toggle Silk Road!"));
+            return;
+        }
+
+        Optional<Shop> shopOpt = shopManager.getShopAt(target.getLocation());
+        if (shopOpt.isEmpty()) {
+            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>No shop found!"));
+            return;
+        }
+
+        Shop shop = shopOpt.get();
+
+        if (!shop.getOwner().equals(player.getUniqueId()) && !player.hasPermission("bettershop.admin")) {
+            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>You don't own this shop!"));
+            return;
+        }
+
+        // Fire event
+        dev.ked.bettershop.events.ShopSilkRoadToggleEvent event =
+            new dev.ked.bettershop.events.ShopSilkRoadToggleEvent(shop, player, enable);
+        Bukkit.getServer().getPluginManager().callEvent(event);
+
+        if (event.isCancelled()) {
+            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>Silk Road toggle cancelled!"));
+            return;
+        }
+
+        shop.setSilkRoadEnabled(enable);
+
+        // Update visuals
+        signRenderer.createOrUpdateSign(shop);
+        hologramManager.updateHologram(shop);
+
+        String status = enable ? "<green>enabled" : "<red>disabled";
+        player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<gray>Silk Road " + status + "<gray> for this shop!"));
+    }
+
+    private void handleSilkRoadAll(Player player, boolean enable) {
+        List<Shop> shops = registry.getShopsByOwner(player.getUniqueId());
+
+        if (shops.isEmpty()) {
+            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>You don't own any shops!"));
+            return;
+        }
+
+        int count = 0;
+        for (Shop shop : shops) {
+            // Fire event for each shop
+            dev.ked.bettershop.events.ShopSilkRoadToggleEvent event =
+                new dev.ked.bettershop.events.ShopSilkRoadToggleEvent(shop, player, enable);
+            Bukkit.getServer().getPluginManager().callEvent(event);
+
+            if (!event.isCancelled()) {
+                shop.setSilkRoadEnabled(enable);
+                signRenderer.createOrUpdateSign(shop);
+                hologramManager.updateHologram(shop);
+                count++;
+            }
+        }
+
+        String status = enable ? "<green>enabled" : "<red>disabled";
+        player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<gray>Silk Road " + status + "<gray> for <white>" + count + "<gray> shop(s)!"));
+    }
+
     private void sendHelp(Player player) {
         player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<gold>BetterShop Commands:"));
         player.sendMessage(miniMessage.deserialize("<gray>/shop create <buy|sell> <price> <white>- Create a shop"));
@@ -485,6 +583,10 @@ public class ShopCommand implements CommandExecutor, TabCompleter, Listener {
         player.sendMessage(miniMessage.deserialize("<gray>/shop info <white>- View shop info"));
         player.sendMessage(miniMessage.deserialize("<gray>/shop collect <white>- Collect shop earnings"));
         player.sendMessage(miniMessage.deserialize("<gray>/shop list <white>- List your shops"));
+
+        if (player.hasPermission("bettershop.silkroad")) {
+            player.sendMessage(miniMessage.deserialize("<gray>/shop silkroad <enable|disable> [all] <white>- Toggle Silk Road"));
+        }
 
         if (player.hasPermission("bettershop.admin")) {
             player.sendMessage(miniMessage.deserialize("<gray>/shop reload <white>- Reload config"));
@@ -494,7 +596,7 @@ public class ShopCommand implements CommandExecutor, TabCompleter, Listener {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 1) {
-            return Arrays.asList("create", "remove", "info", "collect", "list", "reload");
+            return Arrays.asList("create", "remove", "info", "collect", "list", "reload", "silkroad");
         }
 
         if (args.length == 2 && args[0].equalsIgnoreCase("create")) {
@@ -503,6 +605,14 @@ public class ShopCommand implements CommandExecutor, TabCompleter, Listener {
 
         if (args.length == 3 && args[0].equalsIgnoreCase("create")) {
             return Arrays.asList("10", "50", "100", "500", "1000");
+        }
+
+        if (args.length == 2 && args[0].equalsIgnoreCase("silkroad")) {
+            return Arrays.asList("enable", "disable");
+        }
+
+        if (args.length == 3 && args[0].equalsIgnoreCase("silkroad")) {
+            return Arrays.asList("all");
         }
 
         return Collections.emptyList();

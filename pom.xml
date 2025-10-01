@@ -109,7 +109,7 @@
             <id>with-tan</id>
             <activation>
                 <file>
-                    <exists>${project.basedir}/libs/TownsAndNations-0.15.4.jar</exists>
+                    <exists>${basedir}/libs/TownsAndNations-0.15.4.jar</exists>
                 </file>
             </activation>
             <dependencies>
@@ -118,7 +118,7 @@
                     <artifactId>TownsAndNations</artifactId>
                     <version>0.15.4</version>
                     <scope>system</scope>
-                    <systemPath>${project.basedir}/libs/TownsAndNations-0.15.4.jar</systemPath>
+                    <systemPath>${basedir}/libs/TownsAndNations-0.15.4.jar</systemPath>
                 </dependency>
             </dependencies>
         </profile>

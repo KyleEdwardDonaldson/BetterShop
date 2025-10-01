@@ -79,6 +79,7 @@ public class ShopManager {
 
     /**
      * Calculate current stock of a shop from chest contents.
+     * This returns the physical stock in the chest, NOT including reserved stock.
      */
     public int getStock(Shop shop) {
         Block block = shop.getLocation().getBlock();
@@ -103,6 +104,16 @@ public class ShopManager {
         }
 
         return count;
+    }
+
+    /**
+     * Get available stock (physical stock minus reserved stock).
+     * This is what players can actually buy.
+     */
+    public int getAvailableStock(Shop shop) {
+        int physicalStock = getStock(shop);
+        int reservedStock = shop.getTotalReservedStock();
+        return Math.max(0, physicalStock - reservedStock);
     }
 
     /**
@@ -139,9 +150,9 @@ public class ShopManager {
             return new TransactionResultData(TransactionResult.INSUFFICIENT_FUNDS);
         }
 
-        // Check shop has stock
-        int stock = getStock(shop);
-        if (stock < quantity) {
+        // Check shop has stock (must check available stock, not just physical stock)
+        int availableStock = getAvailableStock(shop);
+        if (availableStock < quantity) {
             return new TransactionResultData(TransactionResult.INSUFFICIENT_STOCK);
         }
 

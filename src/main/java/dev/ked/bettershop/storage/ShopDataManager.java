@@ -57,6 +57,15 @@ public class ShopDataManager {
                 data.earnings = shop.getEarnings();
                 data.buyLimit = shop.getBuyLimit();
                 data.createdAt = shop.getCreatedAt();
+                data.silkRoadEnabled = shop.isSilkRoadEnabled();
+
+                // Serialize reserved stock map
+                if (!shop.getReservedStock().isEmpty()) {
+                    data.reservedStock = new HashMap<>();
+                    for (Map.Entry<UUID, Integer> entry : shop.getReservedStock().entrySet()) {
+                        data.reservedStock.put(entry.getKey().toString(), entry.getValue());
+                    }
+                }
 
                 shopDataList.add(data);
             }
@@ -115,6 +124,25 @@ public class ShopDataManager {
                     int buyLimit = data.buyLimit != null ? data.buyLimit : 0; // Backward compatibility
                     Shop shop = new Shop(location, owner, type, item, data.price, buyLimit);
                     shop.setEarnings(data.earnings);
+
+                    // Load Silk Road data
+                    if (data.silkRoadEnabled != null) {
+                        shop.setSilkRoadEnabled(data.silkRoadEnabled);
+                    }
+
+                    // Load reserved stock
+                    if (data.reservedStock != null && !data.reservedStock.isEmpty()) {
+                        Map<UUID, Integer> reservedStock = new HashMap<>();
+                        for (Map.Entry<String, Integer> entry : data.reservedStock.entrySet()) {
+                            try {
+                                UUID contractId = UUID.fromString(entry.getKey());
+                                reservedStock.put(contractId, entry.getValue());
+                            } catch (IllegalArgumentException e) {
+                                logger.warning("Invalid UUID in reserved stock: " + entry.getKey());
+                            }
+                        }
+                        shop.setReservedStock(reservedStock);
+                    }
 
                     registry.registerShop(shop);
                     loaded++;
@@ -179,5 +207,7 @@ public class ShopDataManager {
         double earnings;
         Integer buyLimit; // For BUY shops: how many items to buy (0 = unlimited, null for backward compat)
         long createdAt;
+        Boolean silkRoadEnabled; // Silk Road integration flag
+        Map<String, Integer> reservedStock; // Contract ID -> quantity (stored as strings for JSON)
     }
 }

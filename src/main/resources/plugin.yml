@@ -13,11 +13,12 @@ softdepend:
   - PlaceholderAPI
   - Towny
   - TownsAndNations
+  - SilkRoad
 
 commands:
   shop:
     description: Main shop command
-    usage: /<command> [create|remove|info|collect|list|reload]
+    usage: /<command> [create|remove|info|collect|list|reload|silkroad]
     aliases: [bshop, playershop]
     permission: bettershop.use
 
@@ -37,12 +38,16 @@ permissions:
   bettershop.list:
     description: Allows listing own shops
     default: true
+  bettershop.silkroad:
+    description: Allows enabling/disabling Silk Road for shops
+    default: true
   bettershop.admin:
     description: All admin permissions
     default: op
     children:
       bettershop.admin.reload: true
       bettershop.admin.remove: true
+      bettershop.silkroad: true
   bettershop.admin.reload:
     description: Reload plugin configuration
     default: op

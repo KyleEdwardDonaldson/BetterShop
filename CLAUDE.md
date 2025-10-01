@@ -6,6 +6,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **BetterShop** is a Paper Minecraft plugin (1.21.x, Java 17+) that provides an intuitive player-to-player shop system. Players can create chest-based shops with clean visual presentation (signs, holograms) and interact through either quick-buy or a modern GUI interface.
 
+This plugin runs on the **Stormcraft** Minecraft server, deployed on a VPS via Pterodactyl panel.
+
+## Deployment Context
+
+### Server Infrastructure
+- **Server**: Stormcraft Minecraft server
+- **Platform**: VPS with Pterodactyl panel
+- **Pterodactyl Volume**: `/var/lib/pterodactyl/volumes/<server-id>/plugins/`
+- **Build Target**: When building the JAR, output directly to the Pterodactyl plugins folder for immediate deployment
+
+### Build Process
+When compiling this plugin:
+- Build the JAR using Maven: `mvn clean package`
+- Output the JAR directly to the Pterodactyl volume plugins folder instead of `target/`
+- This allows for immediate plugin reload/restart without manual file copying
+
+Example build command:
+```bash
+mvn clean package && cp target/BetterShop-*.jar /var/lib/pterodactyl/volumes/<server-id>/plugins/
+```
+
+Or configure Maven to output directly to the deployment location.
+
 ## Architecture
 
 ### Core Components

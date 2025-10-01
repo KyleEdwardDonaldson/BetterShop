@@ -1,5 +1,6 @@
 package dev.ked.bettershop;
 
+import dev.ked.bettershop.api.BetterShopAPI;
 import dev.ked.bettershop.commands.ShopCommand;
 import dev.ked.bettershop.config.ConfigManager;
 import dev.ked.bettershop.integration.TerritoryManager;
@@ -34,6 +35,7 @@ public class BetterShopPlugin extends JavaPlugin {
     private TradeGUI tradeGUI;
     private TerritoryManager territoryManager;
     private Economy economy;
+    private BetterShopAPI betterShopAPI;
 
     private BukkitTask autoSaveTask;
 
@@ -63,6 +65,9 @@ public class BetterShopPlugin extends JavaPlugin {
         hologramManager = new HologramManager(configManager, shopManager, shopRegistry);
         materialSelector = new MaterialSelectorGUI();
         tradeGUI = new TradeGUI(configManager, shopManager, economy);
+
+        // Initialize API for external plugins (like SilkRoad)
+        betterShopAPI = new BetterShopAPI(shopRegistry, shopManager, this);
 
         // Load shops from disk
         dataManager.loadShops(shopRegistry);
@@ -184,5 +189,14 @@ public class BetterShopPlugin extends JavaPlugin {
 
     public TerritoryManager getTerritoryManager() {
         return territoryManager;
+    }
+
+    /**
+     * Get the BetterShop API for external plugins.
+     * Used by plugins like SilkRoad for shop integration.
+     * @return BetterShopAPI instance
+     */
+    public BetterShopAPI getBetterShopAPI() {
+        return betterShopAPI;
     }
 }

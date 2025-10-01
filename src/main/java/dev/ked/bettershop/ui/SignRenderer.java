@@ -89,7 +89,13 @@ public class SignRenderer {
         // Line 4: Stock (for SELL shops) or Buy limit (for BUY shops)
         Component line4;
         if (shop.getType() == ShopType.SELL) {
-            line4 = miniMessage.deserialize("<gray>Stock: <white>" + stock);
+            int reservedStock = shop.getTotalReservedStock();
+            if (reservedStock > 0) {
+                // Show "Stock: X (Y transit)"
+                line4 = miniMessage.deserialize("<gray>Stock: <white>" + stock + " <gray>(<yellow>" + reservedStock + " transit<gray>)");
+            } else {
+                line4 = miniMessage.deserialize("<gray>Stock: <white>" + stock);
+            }
         } else {
             // BUY shop
             int buyLimit = shop.getBuyLimit();
