@@ -10,6 +10,7 @@ import dev.ked.bettershop.listeners.GUIListener;
 import dev.ked.bettershop.listeners.ShopModeListener;
 import dev.ked.bettershop.map.MapManager;
 import dev.ked.bettershop.mode.ShopModeManager;
+import dev.ked.bettershop.notification.NotificationManager;
 import dev.ked.bettershop.shop.ShopEntityManager;
 import dev.ked.bettershop.shop.ShopRegistry;
 import dev.ked.bettershop.ui.*;
@@ -43,6 +44,9 @@ public class BetterShopPlugin extends JavaPlugin {
     // MythicMobs integration
     private MythicItemHandler mythicItemHandler;
 
+    // Notification system
+    private NotificationManager notificationManager;
+
     // Economy
     private Economy economy;
 
@@ -64,6 +68,9 @@ public class BetterShopPlugin extends JavaPlugin {
 
         // Set up MythicMobs integration
         mythicItemHandler = new MythicItemHandler(this);
+
+        // Initialize notification system
+        notificationManager = new NotificationManager(this, configManager);
 
         // Initialize registry and managers
         shopRegistry = new ShopRegistry();
@@ -252,5 +259,9 @@ public class BetterShopPlugin extends JavaPlugin {
 
     public MythicItemHandler getMythicItemHandler() {
         return mythicItemHandler;
+    }
+
+    public NotificationManager getNotificationManager() {
+        return notificationManager;
     }
 }

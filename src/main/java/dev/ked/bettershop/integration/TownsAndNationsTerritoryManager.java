@@ -194,6 +194,21 @@ public class TownsAndNationsTerritoryManager implements dev.ked.bettershop.integ
     }
 
     @Override
+    public String getTerritoryId(Location location) {
+        Block block = location.getBlock();
+        if (!claimManager.isBlockClaimed(block)) {
+            return null; // Wilderness
+        }
+
+        Optional<TanTerritory> territoryOpt = claimManager.getTerritoryOfBlock(block);
+        if (territoryOpt.isEmpty()) {
+            return null;
+        }
+
+        return territoryOpt.get().getID();
+    }
+
+    @Override
     public boolean canTreasuryFund(UUID shopOwner, Location location, double amount) {
         if (!config.getTownsAndNationsTreasuryFundingEnabled()) {
             return false;

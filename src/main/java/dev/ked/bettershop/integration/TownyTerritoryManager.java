@@ -169,4 +169,20 @@ public class TownyTerritoryManager implements TerritoryManager {
     public boolean isWilderness(Location location) {
         return townyAPI.getTownBlock(location) == null;
     }
+
+    @Override
+    public String getTerritoryId(Location location) {
+        TownBlock townBlock = townyAPI.getTownBlock(location);
+        if (townBlock == null) {
+            return null; // Wilderness
+        }
+
+        Town town = townBlock.getTownOrNull();
+        if (town == null) {
+            return null;
+        }
+
+        // Use town UUID as territory ID
+        return town.getUUID().toString();
+    }
 }

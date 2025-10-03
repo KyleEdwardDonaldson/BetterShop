@@ -1,6 +1,7 @@
 package dev.ked.bettershop.shop;
 
 import dev.ked.bettershop.integration.TerritoryManager;
+import dev.ked.bettershop.notification.NotificationManager;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -21,6 +22,7 @@ public class ShopManager {
     private final ShopRegistry registry;
     private final Economy economy;
     private TerritoryManager territoryManager;
+    private NotificationManager notificationManager;
 
     public ShopManager(ShopRegistry registry, Economy economy) {
         this.registry = registry;
@@ -29,6 +31,10 @@ public class ShopManager {
 
     public void setTerritoryManager(TerritoryManager territoryManager) {
         this.territoryManager = territoryManager;
+    }
+
+    public void setNotificationManager(NotificationManager notificationManager) {
+        this.notificationManager = notificationManager;
     }
 
     /**
@@ -180,6 +186,20 @@ public class ShopManager {
         itemToGive.setAmount(quantity);
         buyer.getInventory().addItem(itemToGive);
 
+        // Send sale notification to shop owner
+        if (notificationManager != null) {
+            String shopName = "Shop"; // Old Shop class doesn't have names, use generic
+            String itemName = getItemDisplayName(shop.getItem());
+            notificationManager.addSaleNotification(
+                shop.getOwner(),
+                shopName,
+                buyer.getName(),
+                itemName,
+                quantity,
+                totalPrice
+            );
+        }
+
         return new TransactionResultData(TransactionResult.SUCCESS, transactionTax, territoryName);
     }
 
@@ -254,6 +274,20 @@ public class ShopManager {
         // Pay transaction tax to territory
         if (transactionTax > 0.0 && territoryManager != null) {
             territoryManager.payTax(shop.getLocation(), transactionTax);
+        }
+
+        // Send sale notification to shop owner (for BUY shops, they're "buying" from players)
+        if (notificationManager != null) {
+            String shopName = "Shop"; // Old Shop class doesn't have names, use generic
+            String itemName = getItemDisplayName(shop.getItem());
+            notificationManager.addSaleNotification(
+                shop.getOwner(),
+                shopName,
+                seller.getName(),
+                itemName,
+                quantity,
+                totalPrice
+            );
         }
 
         return new TransactionResultData(TransactionResult.SUCCESS, transactionTax, territoryName);
@@ -372,6 +406,20 @@ public class ShopManager {
         toAdd.setAmount(quantity);
 
         return inv.addItem(toAdd).isEmpty();
+    }
+
+    private String getItemDisplayName(ItemStack item) {
+        if (item == null) {
+            return "Unknown Item";
+        }
+        String materialName = item.getType().name();
+        String[] parts = materialName.split("_");
+        StringBuilder result = new StringBuilder();
+        for (String part : parts) {
+            if (result.length() > 0) result.append(" ");
+            result.append(part.charAt(0)).append(part.substring(1).toLowerCase());
+        }
+        return result.toString();
     }
 
     public enum TransactionResult {

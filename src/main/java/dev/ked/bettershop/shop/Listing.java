@@ -25,6 +25,7 @@ public class Listing {
     private final long createdAt;
     private boolean silkRoadEnabled = false;
     private Map<UUID, Integer> reservedStock = new HashMap<>(); // UUID = contractId
+    private ShopPartnership partnership; // Optional partnership for revenue sharing
 
     public Listing(UUID id, UUID shopId, Location location, UUID owner, ListingType type, ItemStack item, double price) {
         this.id = id;
@@ -266,6 +267,30 @@ public class Listing {
      */
     public void setMythicItemId(String mythicItemId) {
         this.mythicItemId = mythicItemId;
+    }
+
+    /**
+     * Get the shop partnership.
+     * @return The partnership, or null if no partnership exists
+     */
+    public ShopPartnership getPartnership() {
+        return partnership;
+    }
+
+    /**
+     * Set the shop partnership.
+     * @param partnership The partnership
+     */
+    public void setPartnership(ShopPartnership partnership) {
+        this.partnership = partnership;
+    }
+
+    /**
+     * Check if this listing has a partnership.
+     * @return true if partnership exists
+     */
+    public boolean hasPartnership() {
+        return partnership != null && partnership.hasPartners();
     }
 
     @Override

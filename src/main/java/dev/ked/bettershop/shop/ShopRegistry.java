@@ -264,6 +264,23 @@ public class ShopRegistry {
     // ===== BACKWARD COMPATIBILITY METHODS =====
 
     /**
+     * @deprecated Old Shop system - not supported in new Listing system
+     */
+    @Deprecated
+    public void registerShop(Shop shop) {
+        // Old Shop system is deprecated - do nothing
+        // ShopManager should not be used for new shops
+    }
+
+    /**
+     * @deprecated Old Shop system - not supported in new Listing system
+     */
+    @Deprecated
+    public void unregisterShop(Shop shop) {
+        // Old Shop system is deprecated - do nothing
+    }
+
+    /**
      * @deprecated Use {@link #getListingAt(Location)} instead.
      */
     @Deprecated

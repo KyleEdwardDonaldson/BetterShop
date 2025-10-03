@@ -6,7 +6,7 @@ import dev.ked.bettershop.shop.ShopRegistry;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.plugin.Plugin;
-import org.dynmap.DynmapAPI;
+import org.dynmap.DynmapCommonAPI;
 import org.dynmap.markers.Marker;
 import org.dynmap.markers.MarkerAPI;
 import org.dynmap.markers.MarkerIcon;
@@ -23,7 +23,7 @@ public class DynmapIntegration extends MapIntegration {
     private static final String MARKER_SET_ID = "bettershop.listings";
     private static final String MARKER_SET_LABEL = "Shop Listings";
 
-    private DynmapAPI dynmapAPI;
+    private DynmapCommonAPI dynmapAPI;
     private MarkerAPI markerAPI;
     private MarkerSet markerSet;
     private MarkerIcon sellIcon;
@@ -42,7 +42,7 @@ public class DynmapIntegration extends MapIntegration {
                 return false;
             }
 
-            dynmapAPI = (DynmapAPI) dynmap;
+            dynmapAPI = (DynmapCommonAPI) dynmap;
             markerAPI = dynmapAPI.getMarkerAPI();
 
             if (markerAPI == null) {

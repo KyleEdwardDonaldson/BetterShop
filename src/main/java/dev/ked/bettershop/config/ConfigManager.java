@@ -233,6 +233,48 @@ public class ConfigManager {
         return config.getBoolean("townsandnations.treasuryFunding.enabled", false);
     }
 
+    // Notification settings
+    public boolean isSaleNotificationsEnabled() {
+        return config.getBoolean("notifications.saleNotifications.enabled", true);
+    }
+
+    public int getNotificationBatchInterval() {
+        return config.getInt("notifications.saleNotifications.batchInterval", 60);
+    }
+
+    public double getMinNotificationValue() {
+        return config.getDouble("notifications.saleNotifications.minValue", 100.0);
+    }
+
+    public boolean isNotificationSoundsEnabled() {
+        return config.getBoolean("notifications.saleNotifications.sounds", true);
+    }
+
+    public boolean isDetailedBatchEnabled() {
+        return config.getBoolean("notifications.saleNotifications.detailedBatch", true);
+    }
+
+    public boolean isLowStockAlertsEnabled() {
+        return config.getBoolean("notifications.lowStockAlerts.enabled", true);
+    }
+
+    public int getLowStockThreshold() {
+        return config.getInt("notifications.lowStockAlerts.threshold", 10);
+    }
+
+    public boolean isPartnershipNotificationsEnabled() {
+        return config.getBoolean("notifications.partnershipNotifications.enabled", true);
+    }
+
+    // Partnership settings
+    public boolean isPartnershipsEnabled() {
+        return config.getBoolean("partnerships.enabled", true);
+    }
+
+    public int getMaxPartnersPerShop() {
+        return config.getInt("partnerships.maxPartnersPerShop", 5);
+    }
+
     // Messages
     public String getMessage(String key) {
         String message = messages.getString(key, "Message not found: " + key);
