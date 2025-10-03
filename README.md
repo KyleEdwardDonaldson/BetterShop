@@ -1,10 +1,10 @@
-# 🏪 BetterShop
+# 🏪 Bazaar
 
 An intuitive player-to-player shop system for Minecraft Paper 1.21.3+ with GUI trading, holograms, and sign displays.
 
 ## ⚡ MythicMobs Integration
 
-BetterShop supports **[MythicMobs](https://mythiccraft.io/index.php)** - sell and buy custom mythic items like boss drops and event rewards!
+Bazaar supports **[MythicMobs](https://mythiccraft.io/index.php)** - sell and buy custom mythic items like boss drops and event rewards!
 
 **Features:**
 - Browse and select from all available MythicMobs items
@@ -17,7 +17,7 @@ BetterShop supports **[MythicMobs](https://mythiccraft.io/index.php)** - sell an
 
 ## 🛤️ Silk Road Integration
 
-BetterShop supports **[Silk Road](https://github.com/KyleEdwardDonaldson/SilkRoad)** - a cross-regional trading system with player-driven delivery contracts!
+Bazaar supports **[Silk Road](https://github.com/KyleEdwardDonaldson/SilkRoad)** - a cross-regional trading system with player-driven delivery contracts!
 
 **Enable Silk Road on your shops to:**
 - Allow remote purchases from other regions
@@ -74,12 +74,12 @@ See the [Silk Road Plugin](https://github.com/KyleEdwardDonaldson/SilkRoad) for 
    # Place TownsAndNations-0.15.4.jar in project root first
    mvn clean package
    ```
-   - Place `target/bettershop-0.1.0.jar` in `plugins/` folder
+   - Place `target/bazaar-0.1.0.jar` in `plugins/` folder
    - Restart server
 
 3. **Optional Integrations:**
    - **Territory Integration:** Install either Towny or Towns and Nations plugin and enable in `config.yml`
-   - **MythicMobs:** Install MythicMobs plugin - BetterShop will automatically detect it and enable mythic item support
+   - **MythicMobs:** Install MythicMobs plugin - Bazaar will automatically detect it and enable mythic item support
 
 ## Usage
 
@@ -151,7 +151,7 @@ Simply open the shop chest and add/remove items. Signs and holograms update auto
 
 ## Territory Integration
 
-BetterShop integrates with **Towny** and **Towns and Nations** for advanced territory-based shop features.
+Bazaar integrates with **Towny** and **Towns and Nations** for advanced territory-based shop features.
 
 ### Features
 
@@ -234,17 +234,17 @@ townsandnations:
 
 | Command | Description | Permission |
 |---------|-------------|------------|
-| `/shop create sell <price>` | Create a sell shop | `bettershop.create` |
-| `/shop create buy <price>` | Create a buy shop | `bettershop.create` |
-| `/shop remove` | Remove a shop | `bettershop.remove` |
-| `/shop info` | View shop details | `bettershop.info` |
+| `/shop create sell <price>` | Create a sell shop | `bazaar.create` |
+| `/shop create buy <price>` | Create a buy shop | `bazaar.create` |
+| `/shop remove` | Remove a shop | `bazaar.remove` |
+| `/shop info` | View shop details | `bazaar.info` |
 | `/shop collect` | Collect earnings | Default |
-| `/shop list` | List your shops | `bettershop.list` |
-| `/shop silkroad enable` | Enable Silk Road for shop | `bettershop.silkroad` |
-| `/shop silkroad disable` | Disable Silk Road for shop | `bettershop.silkroad` |
-| `/shop silkroad enable all` | Enable for all shops | `bettershop.silkroad` |
-| `/shop silkroad disable all` | Disable for all shops | `bettershop.silkroad` |
-| `/shop reload` | Reload config | `bettershop.admin.reload` |
+| `/shop list` | List your shops | `bazaar.list` |
+| `/shop silkroad enable` | Enable Silk Road for shop | `bazaar.silkroad` |
+| `/shop silkroad disable` | Disable Silk Road for shop | `bazaar.silkroad` |
+| `/shop silkroad enable all` | Enable for all shops | `bazaar.silkroad` |
+| `/shop silkroad disable all` | Disable for all shops | `bazaar.silkroad` |
+| `/shop reload` | Reload config | `bazaar.admin.reload` |
 
 ## Configuration
 
@@ -286,13 +286,13 @@ See the **Territory Integration** section above for detailed Towny and Towns and
 
 ## Permissions
 
-- `bettershop.create` - Create shops (default: true)
-- `bettershop.remove` - Remove own shops (default: true)
-- `bettershop.info` - View shop info (default: true)
-- `bettershop.list` - List own shops (default: true)
-- `bettershop.silkroad` - Enable/disable Silk Road integration (default: true)
-- `bettershop.admin` - All admin permissions (default: op)
-- `bettershop.admin.reload` - Reload config (default: op)
+- `bazaar.create` - Create shops (default: true)
+- `bazaar.remove` - Remove own shops (default: true)
+- `bazaar.info` - View shop info (default: true)
+- `bazaar.list` - List own shops (default: true)
+- `bazaar.silkroad` - Enable/disable Silk Road integration (default: true)
+- `bazaar.admin` - All admin permissions (default: op)
+- `bazaar.admin.reload` - Reload config (default: op)
 
 ## Example Workflows
 

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**BetterShop** is a Paper Minecraft plugin (1.21.x, Java 17+) that provides an intuitive player-to-player shop system. Players can create chest-based shops with clean visual presentation (signs, holograms) and interact through either quick-buy or a modern GUI interface.
+**Bazaar** is a Paper Minecraft plugin (1.21.x, Java 17+) that provides an intuitive player-to-player shop system. Players can create chest-based shops with clean visual presentation (signs, holograms) and interact through either quick-buy or a modern GUI interface.
 
 This plugin runs on the **Stormcraft** Minecraft server, deployed on a VPS via Pterodactyl panel.
 
@@ -24,7 +24,7 @@ When compiling this plugin:
 
 Example build command:
 ```bash
-mvn clean package && cp target/BetterShop-*.jar /var/lib/pterodactyl/volumes/<server-id>/plugins/
+mvn clean package && cp target/Bazaar-*.jar /var/lib/pterodactyl/volumes/<server-id>/plugins/
 ```
 
 Or configure Maven to output directly to the deployment location.
@@ -54,8 +54,8 @@ Each shop has:
 ### Package Structure
 
 ```
-dev.ked.bettershop
- ├─ BetterShopPlugin.java (main plugin class)
+dev.ked.bazaar
+ ├─ BazaarPlugin.java (main plugin class)
  ├─ shop/
  │   ├─ Shop.java (shop model)
  │   ├─ ShopType.java (enum: BUY, SELL)
@@ -173,13 +173,13 @@ Prevent:
 
 Base command: `/shop` (aliases: `/bshop`, `/playershop`)
 
-- `/shop create <buy|sell> <price>` - Create shop with held item (requires `bettershop.create`)
-- `/shop remove` - Remove shop you're looking at (requires `bettershop.remove` or ownership)
-- `/shop info` - View shop details and earnings (requires `bettershop.info`)
+- `/shop create <buy|sell> <price>` - Create shop with held item (requires `bazaar.create`)
+- `/shop remove` - Remove shop you're looking at (requires `bazaar.remove` or ownership)
+- `/shop info` - View shop details and earnings (requires `bazaar.info`)
 - `/shop collect` - Collect earnings from nearby shop (requires ownership)
-- `/shop list` - List all your shops (requires `bettershop.list`)
-- `/shop reload` - Reload config (requires `bettershop.admin.reload`)
-- `/shop admin remove` - Force remove any shop (requires `bettershop.admin`)
+- `/shop list` - List all your shops (requires `bazaar.list`)
+- `/shop reload` - Reload config (requires `bazaar.admin.reload`)
+- `/shop admin remove` - Force remove any shop (requires `bazaar.admin`)
 
 ## Configuration Files
 

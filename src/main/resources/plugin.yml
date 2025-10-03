@@ -1,6 +1,6 @@
-name: BetterShop
+name: Bazaar
 version: '${project.version}'
-main: dev.ked.bettershop.BetterShopPlugin
+main: dev.ked.bazaar.BazaarPlugin
 api-version: '1.21'
 description: Intuitive player-to-player shop system with GUI and holograms
 author: Kyle Donaldson
@@ -19,38 +19,38 @@ commands:
   shop:
     description: Main shop command
     usage: /<command> [create|remove|info|collect|list|reload|silkroad]
-    aliases: [bshop, playershop]
-    permission: bettershop.use
+    aliases: [bshop, playershop, bazaar]
+    permission: bazaar.use
 
 permissions:
-  bettershop.use:
+  bazaar.use:
     description: Allows basic shop usage
     default: true
-  bettershop.create:
+  bazaar.create:
     description: Allows creating shops
     default: true
-  bettershop.remove:
+  bazaar.remove:
     description: Allows removing own shops
     default: true
-  bettershop.info:
+  bazaar.info:
     description: Allows viewing shop info
     default: true
-  bettershop.list:
+  bazaar.list:
     description: Allows listing own shops
     default: true
-  bettershop.silkroad:
+  bazaar.silkroad:
     description: Allows enabling/disabling Silk Road for shops
     default: true
-  bettershop.admin:
+  bazaar.admin:
     description: All admin permissions
     default: op
     children:
-      bettershop.admin.reload: true
-      bettershop.admin.remove: true
-      bettershop.silkroad: true
-  bettershop.admin.reload:
+      bazaar.admin.reload: true
+      bazaar.admin.remove: true
+      bazaar.silkroad: true
+  bazaar.admin.reload:
     description: Reload plugin configuration
     default: op
-  bettershop.admin.remove:
+  bazaar.admin.remove:
     description: Remove any shop
     default: op

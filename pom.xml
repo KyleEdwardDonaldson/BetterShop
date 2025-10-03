@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>dev.ked</groupId>
-    <artifactId>bettershop</artifactId>
+    <artifactId>bazaar</artifactId>
     <version>0.1.0</version>
     <packaging>jar</packaging>
 
-    <name>BetterShop</name>
+    <name>Bazaar</name>
     <description>Intuitive player-to-player shop system with GUI and holograms</description>
 
     <properties>

@@ -1,8 +1,8 @@
-# BetterShop Messages
+# Bazaar Messages
 # Supports MiniMessage format: https://docs.advntr.dev/minimessage/format.html
 # Placeholders: {price}, {item}, {quantity}, {total}, {stock}, {owner}, {type}
 
-prefix: "<gradient:#00ff00:#00aa00>[BetterShop]</gradient> <gray>"
+prefix: "<gradient:#00ff00:#00aa00>[Bazaar]</gradient> <gray>"
 
 # Shop creation
 shop-created: "{prefix}<green>Shop '{shop_name}' created successfully!"
