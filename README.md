@@ -2,31 +2,6 @@
 
 An intuitive player-to-player shop system for Minecraft Paper 1.21.3+ with GUI trading, holograms, and sign displays.
 
-## ⚡ MythicMobs Integration
-
-Bazaar supports **[MythicMobs](https://mythiccraft.io/index.php)** - sell and buy custom mythic items like boss drops and event rewards!
-
-**Features:**
-- Browse and select from all available MythicMobs items
-- Create BUY shops for mythic boss drops (Storm Titan Core, Tempest Shard, etc.)
-- Signs and holograms display mythic item names
-- Stock tracking works with mythic items
-- No compile-time dependency - gracefully handles MythicMobs not being installed
-
-**Usage:** When creating a BUY shop without an item in hand, the material selector will show a **"✦ Mythic Items ✦"** category (Nether Star icon) if MythicMobs is installed.
-
-## 🛤️ Silk Road Integration
-
-Bazaar supports **[Silk Road](https://github.com/KyleEdwardDonaldson/SilkRoad)** - a cross-regional trading system with player-driven delivery contracts!
-
-**Enable Silk Road on your shops to:**
-- Allow remote purchases from other regions
-- Create delivery contracts automatically
-- Track in-transit stock on signs and holograms
-- Earn from cross-regional trade
-
-See the [Silk Road Plugin](https://github.com/KyleEdwardDonaldson/SilkRoad) for more information.
-
 ## Features
 
 - **Two Shop Types:**
@@ -54,6 +29,31 @@ See the [Silk Road Plugin](https://github.com/KyleEdwardDonaldson/SilkRoad) for 
   - **Towns and Nations** support - Territory claims, permissions, treasury funding
   - **Tax System** - Shop earnings tax and transaction tax for outsiders
   - **Treasury Funding** - BUY shops funded by town treasury (TaN only)
+ 
+### ⚡ MythicMobs Integration
+
+Bazaar supports **[MythicMobs](https://mythiccraft.io/index.php)** - sell and buy custom mythic items like boss drops and event rewards!
+
+**Features:**
+- Browse and select from all available MythicMobs items
+- Create BUY shops for mythic boss drops (Storm Titan Core, Tempest Shard, etc.)
+- Signs and holograms display mythic item names
+- Stock tracking works with mythic items
+- No compile-time dependency - gracefully handles MythicMobs not being installed
+
+**Usage:** When creating a BUY shop without an item in hand, the material selector will show a **"✦ Mythic Items ✦"** category (Nether Star icon) if MythicMobs is installed.
+
+### 🛤️ Silk Road Integration
+
+Bazaar supports **[Silk Road](https://github.com/KyleEdwardDonaldson/SilkRoad)** - a cross-regional trading system with player-driven delivery contracts!
+
+**Enable Silk Road on your shops to:**
+- Allow remote purchases from other regions
+- Create delivery contracts automatically
+- Track in-transit stock on signs and holograms
+- Earn from cross-regional trade
+
+See the [Silk Road Plugin](https://github.com/KyleEdwardDonaldson/SilkRoad) for more information.
 
 ## Installation
 
@@ -322,10 +322,6 @@ See the **Territory Integration** section above for detailed Towny and Towns and
 **Money Flow:**
 - **SELL shops:** Customer pays $ → You collect earnings
 - **BUY shops:** Your Vault balance pays $ → Customer receives money instantly
-
-## Support
-
-Report issues at: https://github.com/anthropics/claude-code/issues
 
 ## License
 
