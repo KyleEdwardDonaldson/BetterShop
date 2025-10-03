@@ -82,6 +82,7 @@ public class BlueMapIntegration extends MapIntegration {
                         .build();
 
                 markerSet.put(markerId, marker);
+                map.save();
             }
 
             markerIds.put(listing.getId(), markerId);
@@ -107,6 +108,7 @@ public class BlueMapIntegration extends MapIntegration {
                 MarkerSet markerSet = map.getMarkerSets().get(MARKER_SET_ID);
                 if (markerSet != null) {
                     markerSet.remove(markerId);
+                    map.save();
                 }
             }
 
@@ -122,6 +124,7 @@ public class BlueMapIntegration extends MapIntegration {
         try {
             for (BlueMapMap map : blueMapAPI.getMaps()) {
                 map.getMarkerSets().remove(MARKER_SET_ID);
+                map.save();
             }
             markerIds.clear();
 

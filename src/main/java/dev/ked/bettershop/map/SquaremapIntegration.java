@@ -20,7 +20,7 @@ public class SquaremapIntegration extends MapIntegration {
     private static final String MARKER_SET_KEY = "bettershop_listings";
     private static final String MARKER_SET_LABEL = "Shop Listings";
 
-    private Squaremap squaremapAPI;
+    private SquaremapProvider squaremapProvider;
     private SimpleLayerProvider layerProvider;
     private final Map<UUID, Marker> markers = new HashMap<>();
 
@@ -35,7 +35,7 @@ public class SquaremapIntegration extends MapIntegration {
                 return false;
             }
 
-            squaremapAPI = SquaremapProvider.get();
+            squaremapProvider = SquaremapProvider.get();
             layerProvider = SimpleLayerProvider.builder(MARKER_SET_LABEL)
                     .showControls(true)
                     .defaultHidden(false)
@@ -43,7 +43,7 @@ public class SquaremapIntegration extends MapIntegration {
                     .build();
 
             // Register layer provider for all worlds
-            for (MapWorld world : squaremapAPI.mapWorlds()) {
+            for (MapWorld world : squaremapProvider.mapWorlds()) {
                 world.layerRegistry().register(Key.of(MARKER_SET_KEY), layerProvider);
             }
 

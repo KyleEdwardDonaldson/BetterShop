@@ -13,27 +13,6 @@ shopMode:
   maxDistance: 100.0            # Max distance from entry point (blocks)
   saveHotbar: true              # Save player's hotbar on mode entry
 
-# Notification settings
-notifications:
-  saleNotifications:
-    enabled: true               # Enable sale notifications for shop owners
-    batchInterval: 60           # Batch interval in seconds (60 = 1 minute)
-    minValue: 100              # Minimum sale value to trigger notification
-    sounds: true                # Play sound on notification
-    detailedBatch: true         # Show per-shop breakdown in batch notifications
-
-  lowStockAlerts:
-    enabled: true               # Alert when shop stock is low
-    threshold: 10               # Stock level to trigger alert
-
-  partnershipNotifications:
-    enabled: true               # Notify partners when they earn from shops
-
-# Partnership settings
-partnerships:
-  enabled: true                 # Enable shop partnerships
-  maxPartnersPerShop: 5         # Maximum partners allowed per shop
-
 # Territory integration
 territory:
   autoDetect: true              # Auto-detect territory on shop creation

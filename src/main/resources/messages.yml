@@ -85,27 +85,3 @@ territory-tax-applied: "{prefix}<gray>Tax paid: <yellow>${amount}</yellow> to {t
 territory-transaction-tax: "{prefix}<gray>Transaction tax: <yellow>${amount}</yellow> ({territory})"
 shop-territory-assigned: "{prefix}<gray>Shop assigned to territory: <white>{territory}"
 shop-territory-mismatch: "{prefix}<red>Must place listings within your shop's territory!"
-
-# Notifications
-notification-sale: "{prefix}<green>💰 {player} bought <white>{quantity}x {item}</white> from <white>{shop}</white> for <yellow>${total}</yellow>!"
-notification-sale-batch: "{prefix}<green>📊 Shop Activity: <white>{count}</white> sales across <white>{shops}</white> shops - <yellow>${total}</yellow> earned!"
-notification-sale-batch-detail: "  <gray>▪ <white>{shop}</white>: <white>{count}</white> sales (<yellow>${total}</yellow>)"
-notification-low-stock: "{prefix}<yellow>⚠ Low Stock Alert: <white>{shop}</white> - <white>{item}</white> only has <red>{stock}</red> left!"
-notification-partnership: "{prefix}<green>💎 Partnership Earnings: <yellow>${earnings}</yellow> from <white>{shop}</white> (<gray>{percentage}% share</gray>)"
-notification-partnership-batch: "{prefix}<green>💎 Partnership Earnings: <yellow>${total}</yellow> from <white>{count}</white> partner shops!"
-
-# Partnerships
-partnership-added: "{prefix}<green>Added <white>{player}</white> as partner with <yellow>{percentage}%</yellow> revenue share"
-partnership-removed: "{prefix}<green>Removed <white>{player}</white> from partnership"
-partnership-updated: "{prefix}<green>Updated <white>{player}</white>'s share to <yellow>{percentage}%</yellow>"
-partnership-not-found: "{prefix}<red>Player is not a partner of this shop"
-partnership-already-exists: "{prefix}<red>Player is already a partner"
-partnership-limit-reached: "{prefix}<red>Maximum partners ({limit}) reached for this shop"
-partnership-invalid-percentage: "{prefix}<red>Share percentage must be between 1% and 99%"
-partnership-total-exceeded: "{prefix}<red>Total partner shares would exceed 100%! Owner needs at least 1%"
-partnership-not-owner: "{prefix}<red>Only the shop owner can manage partnerships"
-partnership-cannot-add-self: "{prefix}<red>You cannot add yourself as a partner"
-partnership-list-header: "{prefix}<gold>===== Shop Partners ({shop}) ====="
-partnership-list-owner: "<gray>Owner: <white>{player}</white> - <yellow>{percentage}%</yellow>"
-partnership-list-partner: "<gray>Partner: <white>{player}</white> - <yellow>{percentage}%</yellow>"
-partnership-list-empty: "{prefix}<gray>This shop has no partners"

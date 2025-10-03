@@ -63,7 +63,6 @@ public class ShopCommand implements CommandExecutor, TabCompleter {
             case "collect" -> handleCollect(player);
             case "remove" -> handleRemoveListing(player);
             case "browse", "directory" -> handleBrowse(player, args);
-            case "partner" -> handlePartner(player, args);
             case "reload" -> handleReload(player);
             default -> sendHelp(player);
         }
@@ -450,235 +449,6 @@ public class ShopCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * /shop partner <add|remove|list|update> [player] [percentage]
-     * Manage shop partnerships.
-     */
-    private void handlePartner(Player player, String[] args) {
-        if (!config.isPartnershipsEnabled()) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>Partnerships are disabled!"));
-            return;
-        }
-
-        if (!player.hasPermission("bettershop.partner")) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>No permission!"));
-            return;
-        }
-
-        if (args.length < 2) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>Usage: /shop partner <add|remove|list|update>"));
-            return;
-        }
-
-        Block target = player.getTargetBlockExact(5);
-        if (target == null) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>Look at a listing!"));
-            return;
-        }
-
-        Optional<Listing> listingOpt = registry.getListingAt(target.getLocation());
-        if (listingOpt.isEmpty()) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>No listing found!"));
-            return;
-        }
-
-        Listing listing = listingOpt.get();
-        if (!listing.getOwner().equals(player.getUniqueId())) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("partnership-not-owner")));
-            return;
-        }
-
-        String action = args[1].toLowerCase();
-
-        switch (action) {
-            case "add" -> handlePartnerAdd(player, listing, args);
-            case "remove" -> handlePartnerRemove(player, listing, args);
-            case "list" -> handlePartnerList(player, listing);
-            case "update" -> handlePartnerUpdate(player, listing, args);
-            default -> player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>Usage: /shop partner <add|remove|list|update>"));
-        }
-    }
-
-    private void handlePartnerAdd(Player player, Listing listing, String[] args) {
-        if (args.length < 4) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>Usage: /shop partner add <player> <percentage>"));
-            return;
-        }
-
-        String partnerName = args[2];
-        Player partnerPlayer = Bukkit.getPlayer(partnerName);
-        if (partnerPlayer == null) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>Player not found or offline!"));
-            return;
-        }
-
-        if (partnerPlayer.getUniqueId().equals(player.getUniqueId())) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("partnership-cannot-add-self")));
-            return;
-        }
-
-        double percentage;
-        try {
-            percentage = Double.parseDouble(args[3]);
-        } catch (NumberFormatException e) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("partnership-invalid-percentage")));
-            return;
-        }
-
-        if (percentage < 1 || percentage > 99) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("partnership-invalid-percentage")));
-            return;
-        }
-
-        // Get or create partnership
-        ShopPartnership partnership = listing.getPartnership();
-        if (partnership == null) {
-            partnership = new ShopPartnership(listing.getShopId(), listing.getOwner());
-            listing.setPartnership(partnership);
-        }
-
-        // Check partner limit
-        if (partnership.getPartners().size() >= config.getMaxPartnersPerShop()) {
-            String message = config.getMessage("partnership-limit-reached", "limit", String.valueOf(config.getMaxPartnersPerShop()));
-            player.sendMessage(miniMessage.deserialize(message));
-            return;
-        }
-
-        // Add partner
-        double sharePercentage = percentage / 100.0;
-        if (!partnership.addPartner(partnerPlayer.getUniqueId(), sharePercentage)) {
-            if (partnership.isPartner(partnerPlayer.getUniqueId())) {
-                player.sendMessage(miniMessage.deserialize(config.getMessage("partnership-already-exists")));
-            } else {
-                player.sendMessage(miniMessage.deserialize(config.getMessage("partnership-total-exceeded")));
-            }
-            return;
-        }
-
-        String message = config.getMessage("partnership-added",
-                "player", partnerPlayer.getName(),
-                "percentage", String.format("%.0f", percentage));
-        player.sendMessage(miniMessage.deserialize(message));
-    }
-
-    private void handlePartnerRemove(Player player, Listing listing, String[] args) {
-        if (args.length < 3) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>Usage: /shop partner remove <player>"));
-            return;
-        }
-
-        ShopPartnership partnership = listing.getPartnership();
-        if (partnership == null || !partnership.hasPartners()) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("partnership-not-found")));
-            return;
-        }
-
-        String partnerName = args[2];
-        Player partnerPlayer = Bukkit.getPlayer(partnerName);
-        if (partnerPlayer == null) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>Player not found or offline!"));
-            return;
-        }
-
-        if (!partnership.removePartner(partnerPlayer.getUniqueId())) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("partnership-not-found")));
-            return;
-        }
-
-        String message = config.getMessage("partnership-removed", "player", partnerPlayer.getName());
-        player.sendMessage(miniMessage.deserialize(message));
-
-        // Remove partnership if no partners left
-        if (!partnership.hasPartners()) {
-            listing.setPartnership(null);
-        }
-    }
-
-    private void handlePartnerList(Player player, Listing listing) {
-        Optional<ShopEntity> shopOpt = registry.getShopById(listing.getShopId());
-        if (shopOpt.isEmpty()) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>Shop not found!"));
-            return;
-        }
-
-        ShopEntity shop = shopOpt.get();
-        ShopPartnership partnership = listing.getPartnership();
-
-        String header = config.getMessage("partnership-list-header", "shop", shop.getName());
-        player.sendMessage(miniMessage.deserialize(header));
-
-        // Show owner
-        String ownerName = Bukkit.getOfflinePlayer(listing.getOwner()).getName();
-        double ownerShare = partnership != null ? partnership.getOwnerShare() * 100 : 100.0;
-        String ownerMsg = config.getMessage("partnership-list-owner",
-                "player", ownerName,
-                "percentage", String.format("%.0f", ownerShare));
-        player.sendMessage(miniMessage.deserialize(ownerMsg));
-
-        // Show partners
-        if (partnership == null || !partnership.hasPartners()) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("partnership-list-empty")));
-            return;
-        }
-
-        for (Map.Entry<UUID, Double> entry : partnership.getPartners().entrySet()) {
-            String partnerName = Bukkit.getOfflinePlayer(entry.getKey()).getName();
-            double partnerShare = entry.getValue() * 100;
-            String partnerMsg = config.getMessage("partnership-list-partner",
-                    "player", partnerName,
-                    "percentage", String.format("%.0f", partnerShare));
-            player.sendMessage(miniMessage.deserialize(partnerMsg));
-        }
-    }
-
-    private void handlePartnerUpdate(Player player, Listing listing, String[] args) {
-        if (args.length < 4) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>Usage: /shop partner update <player> <percentage>"));
-            return;
-        }
-
-        ShopPartnership partnership = listing.getPartnership();
-        if (partnership == null || !partnership.hasPartners()) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("partnership-not-found")));
-            return;
-        }
-
-        String partnerName = args[2];
-        Player partnerPlayer = Bukkit.getPlayer(partnerName);
-        if (partnerPlayer == null) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("prefix") + "<red>Player not found or offline!"));
-            return;
-        }
-
-        double percentage;
-        try {
-            percentage = Double.parseDouble(args[3]);
-        } catch (NumberFormatException e) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("partnership-invalid-percentage")));
-            return;
-        }
-
-        if (percentage < 1 || percentage > 99) {
-            player.sendMessage(miniMessage.deserialize(config.getMessage("partnership-invalid-percentage")));
-            return;
-        }
-
-        double sharePercentage = percentage / 100.0;
-        if (!partnership.updatePartnerShare(partnerPlayer.getUniqueId(), sharePercentage)) {
-            if (!partnership.isPartner(partnerPlayer.getUniqueId())) {
-                player.sendMessage(miniMessage.deserialize(config.getMessage("partnership-not-found")));
-            } else {
-                player.sendMessage(miniMessage.deserialize(config.getMessage("partnership-total-exceeded")));
-            }
-            return;
-        }
-
-        String message = config.getMessage("partnership-updated",
-                "player", partnerPlayer.getName(),
-                "percentage", String.format("%.0f", percentage));
-        player.sendMessage(miniMessage.deserialize(message));
-    }
-
-    /**
      * /shop reload
      * Reload configuration.
      */
@@ -707,7 +477,6 @@ public class ShopCommand implements CommandExecutor, TabCompleter {
         player.sendMessage(miniMessage.deserialize("<yellow>/shop collect <white>- Collect earnings"));
         player.sendMessage(miniMessage.deserialize("<yellow>/shop remove <white>- Remove listing"));
         player.sendMessage(miniMessage.deserialize("<yellow>/shop browse <white>- Browse all shops"));
-        player.sendMessage(miniMessage.deserialize("<yellow>/shop partner <add|remove|list|update> <white>- Manage partnerships"));
 
         if (player.hasPermission("bettershop.admin")) {
             player.sendMessage(miniMessage.deserialize("<yellow>/shop reload <white>- Reload config"));
@@ -721,7 +490,7 @@ public class ShopCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 1) {
-            return Arrays.asList("create", "mode", "rename", "delete", "list", "info", "collect", "remove", "browse", "directory", "partner", "reload")
+            return Arrays.asList("create", "mode", "rename", "delete", "list", "info", "collect", "remove", "browse", "directory", "reload")
                     .stream()
                     .filter(cmd -> cmd.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
@@ -744,31 +513,6 @@ public class ShopCommand implements CommandExecutor, TabCompleter {
                 case "rename":
                 case "create":
                     return Collections.singletonList("<name>");
-
-                case "partner":
-                    return Arrays.asList("add", "remove", "list", "update");
-            }
-        }
-
-        if (args.length == 3) {
-            if (args[0].equalsIgnoreCase("partner")) {
-                String action = args[1].toLowerCase();
-                if (action.equals("add") || action.equals("remove") || action.equals("update")) {
-                    // Suggest online player names
-                    return Bukkit.getOnlinePlayers().stream()
-                            .map(Player::getName)
-                            .filter(name -> name.toLowerCase().startsWith(args[2].toLowerCase()))
-                            .collect(Collectors.toList());
-                }
-            }
-        }
-
-        if (args.length == 4) {
-            if (args[0].equalsIgnoreCase("partner")) {
-                String action = args[1].toLowerCase();
-                if (action.equals("add") || action.equals("update")) {
-                    return Collections.singletonList("<percentage>");
-                }
             }
         }
 

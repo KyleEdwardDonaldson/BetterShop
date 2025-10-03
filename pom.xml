@@ -69,21 +69,6 @@
             <id>glaremasters</id>
             <url>https://repo.glaremasters.me/repository/towny/</url>
         </repository>
-        <!-- Dynmap -->
-        <repository>
-            <id>dynmap-repo</id>
-            <url>https://repo.mikeprimm.com/</url>
-        </repository>
-        <!-- BlueMap -->
-        <repository>
-            <id>bluecolored</id>
-            <url>https://repo.bluecolored.de/releases</url>
-        </repository>
-        <!-- MythicMobs -->
-        <repository>
-            <id>lumine</id>
-            <url>https://mvn.lumine.io/repository/maven-public/</url>
-        </repository>
     </repositories>
 
     <dependencies>
@@ -112,34 +97,6 @@
             <groupId>com.palmergames.bukkit.towny</groupId>
             <artifactId>towny</artifactId>
             <version>0.100.3.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- Dynmap (optional - for map integration) -->
-        <dependency>
-            <groupId>us.dynmap</groupId>
-            <artifactId>DynmapCoreAPI</artifactId>
-            <version>3.7-beta-6</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- BlueMap (optional - for map integration) -->
-        <dependency>
-            <groupId>de.bluecolored.bluemap</groupId>
-            <artifactId>BlueMapAPI</artifactId>
-            <version>2.7.2</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- Squaremap (optional - for map integration) -->
-        <dependency>
-            <groupId>xyz.jpenilla</groupId>
-            <artifactId>squaremap-api</artifactId>
-            <version>1.2.3</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- MythicMobs (optional - for mythic item support) -->
-        <dependency>
-            <groupId>io.lumine</groupId>
-            <artifactId>Mythic-Dist</artifactId>
-            <version>5.6.1</version>
             <scope>provided</scope>
         </dependency>
         <!-- Towns and Nations (optional - place JAR in libs/ folder) -->
